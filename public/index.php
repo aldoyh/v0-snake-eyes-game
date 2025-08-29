@@ -252,8 +252,13 @@ function handleGetLeaderboard($pdo)
         rel="stylesheet">
     <style>
         body {
-            font-family: 'Poppins', 'Tajawal', sans-serif;
+            font-family: 'Poppins', sans-serif;
             overflow: hidden;
+        }
+
+        /* Arabic text styling */
+        body[dir="rtl"] {
+            font-family: 'Tajawal', sans-serif;
         }
 
         /* Ensure input fields work properly on all devices */
@@ -272,8 +277,13 @@ function handleGetLeaderboard($pdo)
             font-family: 'Press Start 2P', cursive;
         }
 
+        /* Input field fonts - supports both LTR and RTL */
         .input-field {
-            font-family: 'Poppins', 'Tajawal', sans-serif;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        [dir="rtl"] .input-field {
+            font-family: 'Tajawal', sans-serif;
         }
 
         .input-field:focus {
@@ -300,6 +310,35 @@ function handleGetLeaderboard($pdo)
         [dir="rtl"] {
             font-family: 'Tajawal', sans-serif;
         }
+
+        /* Arabic-specific font weights and spacing */
+        [dir="rtl"] .font-game {
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        /* Better Arabic text rendering */
+        [dir="rtl"] h1,
+        [dir="rtl"] h2,
+        [dir="rtl"] h3,
+        [dir="rtl"] button,
+        [dir="rtl"] .text-content {
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Leaderboard Arabic styling */
+        [dir="rtl"] #leaderboard-container {
+            left: auto;
+            right: 4px;
+        }
+
+        /* Language toggle positioning for RTL */
+        [dir="rtl"] #lang-toggle-container {
+            right: auto;
+            left: 1rem;
+        }
     </style>
 </head>
 
@@ -308,14 +347,14 @@ function handleGetLeaderboard($pdo)
     <!-- Leaderboard Display -->
     <div id="leaderboard-container"
         class="absolute top-4 left-4 z-20 bg-black bg-opacity-40 p-4 rounded-lg w-64 shadow-lg backdrop-blur-sm">
-        <h3 id="leaderboard-title" class="text-lg font-game text-yellow-400 mb-2 text-center">LEADERBOARD</h3>
+        <h3 id="leaderboard-title" class="text-lg font-game text-yellow-400 mb-2 text-center text-content">LEADERBOARD</h3>
         <ol id="leaderboard-list" class="list-decimal list-inside text-white space-y-1">
             <li class="opacity-50">Loading...</li>
         </ol>
     </div>
 
     <!-- Language Toggle Button -->
-    <div class="absolute top-4 right-4 z-20">
+    <div class="absolute top-4 right-4 z-20" id="lang-toggle-container">
         <button id="lang-toggle"
             class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
             عربي
@@ -324,11 +363,11 @@ function handleGetLeaderboard($pdo)
 
     <!-- Main Game UI -->
     <div class="w-full max-w-lg text-center mb-4">
-        <h1 id="title" class="text-4xl font-game text-green-400">SNAKE</h1>
-        <p id="subtitle" class="text-gray-400 mt-2">Swipe anywhere to control the snake</p>
+        <h1 id="title" class="text-4xl font-game text-green-400 text-content">SNAKE</h1>
+        <p id="subtitle" class="text-gray-400 mt-2 text-content">Swipe anywhere to control the snake</p>
         <div class="mt-4 text-2xl font-game flex justify-center items-center gap-8">
-            <div><span id="score-label">SCORE</span>: <span id="score" class="text-yellow-400">0</span></div>
-            <div><span id="level-label">LEVEL</span>: <span id="level" class="text-cyan-400">1</span></div>
+            <div class="text-content"><span id="score-label">SCORE</span>: <span id="score" class="text-yellow-400">0</span></div>
+            <div class="text-content"><span id="level-label">LEVEL</span>: <span id="level" class="text-cyan-400">1</span></div>
         </div>
     </div>
 
@@ -337,12 +376,12 @@ function handleGetLeaderboard($pdo)
         <!-- Name Entry Overlay -->
         <div id="name-entry-overlay"
             class="absolute inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center rounded-lg text-center p-4 z-20">
-            <h2 id="name-entry-title" class="text-4xl font-game text-yellow-400 mb-6">ENTER YOUR NAME</h2>
+            <h2 id="name-entry-title" class="text-4xl font-game text-yellow-400 mb-6 text-content">ENTER YOUR NAME</h2>
             <input type="text" id="player-name-input"
                 class="input-field bg-gray-800 border-2 border-gray-600 text-white text-xl p-4 rounded-lg mb-6 w-80 max-w-full text-center transition-all duration-200 focus:border-green-500 focus:bg-gray-700"
                 placeholder="Your Name" maxlength="20" autocomplete="off" spellcheck="false">
             <button id="confirm-name-button"
-                class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-lg disabled:opacity-50 disabled:hover:scale-100"
+                class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-lg disabled:opacity-50 disabled:hover:scale-100 text-content"
                 disabled>
                 CONTINUE
             </button>
@@ -350,11 +389,11 @@ function handleGetLeaderboard($pdo)
 
         <div id="tutorial-overlay"
             class="absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center rounded-lg text-center p-4 z-10 hidden">
-            <h2 id="tutorial-title" class="text-4xl font-game text-yellow-400 mb-6">HOW TO PLAY</h2>
-            <p id="tutorial-text" class="text-xl text-gray-200 mb-8">Swipe anywhere on the screen to guide the snake.
+            <h2 id="tutorial-title" class="text-4xl font-game text-yellow-400 mb-6 text-content">HOW TO PLAY</h2>
+            <p id="tutorial-text" class="text-xl text-gray-200 mb-8 text-content">Swipe anywhere on the screen to guide the snake.
             </p>
             <button id="start-button"
-                class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-lg">
+                class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-lg text-content">
                 START GAME
             </button>
             <div class="absolute bottom-4 text-gray-500 text-sm">
@@ -365,11 +404,11 @@ function handleGetLeaderboard($pdo)
 
         <div id="game-over"
             class="absolute inset-0 bg-black bg-opacity-70 flex-col items-center justify-center rounded-lg text-center hidden">
-            <h2 id="game-over-title" class="text-5xl font-game text-red-500">GAME OVER</h2>
-            <p class="mt-4 text-xl text-gray-300"><span id="final-score-label">Your score</span>: <span id="final-score"
+            <h2 id="game-over-title" class="text-5xl font-game text-red-500 text-content">GAME OVER</h2>
+            <p class="mt-4 text-xl text-gray-300 text-content"><span id="final-score-label">Your score</span>: <span id="final-score"
                     class="font-bold text-yellow-300">0</span></p>
             <button id="restart-button"
-                class="mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-sm">
+                class="mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-sm text-content">
                 RESTART
             </button>
         </div>
@@ -459,6 +498,8 @@ function handleGetLeaderboard($pdo)
             const t = translations[lang];
             document.documentElement.lang = lang;
             document.body.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+            // Update text content
             document.getElementById('title').textContent = t.title;
             document.getElementById('subtitle').textContent = t.subtitle;
             document.getElementById('score-label').textContent = t.scoreLabel;
@@ -480,6 +521,16 @@ function handleGetLeaderboard($pdo)
             document.getElementById('replay-info').textContent = t.replayInfo;
             document.getElementById('replay-pause-button').textContent = t.pauseButton;
             document.getElementById('replay-exit-button').textContent = t.exitReplayButton;
+
+            // Update input direction and text alignment for RTL
+            const nameInput = document.getElementById('player-name-input');
+            if (lang === 'ar') {
+                nameInput.style.textAlign = 'center';
+                nameInput.style.direction = 'rtl';
+            } else {
+                nameInput.style.textAlign = 'center';
+                nameInput.style.direction = 'ltr';
+            }
         }
 
         // --- GAME LOGIC (p5.js) ---

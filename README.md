@@ -3,3 +3,9 @@
 This is a simple snake eyes game.
 
 DEVELOPED BY: HASAN ALDOY
+
+### SPONSORED BY:
+
+GULFMARCOM
+BAHRAINOUNA
+
