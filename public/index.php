@@ -252,9 +252,12 @@ function handleGetLeaderboard($pdo)
         rel="stylesheet">
     <style>
         body {
-            font-family: 'Poppins', sans-serif;
-            overflow: hidden;
-        }
+        background-image: url('snake-game-bg.jpg');
+        background-size: cover;
+        background-position: center;
+        font-family: 'Poppins', sans-serif;
+        overflow: hidden;
+    }
 
         /* Arabic text styling */
         body[dir="rtl"] {
@@ -367,6 +370,12 @@ function handleGetLeaderboard($pdo)
     </audio>
     <audio id="snake-eat-sound" preload="auto">
         <source src="snake-eat.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="move-sound" preload="auto">
+        <source src="move.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="food-sound" preload="auto">
+        <source src="food.mp3" type="audio/mpeg">
     </audio>
 
     <!-- Main Game UI -->
@@ -598,6 +607,8 @@ function handleGetLeaderboard($pdo)
             // Audio elements
             const introSplashSound = document.getElementById('intro-splash-sound');
             const snakeEatSound = document.getElementById('snake-eat-sound');
+            const moveSound = document.getElementById('move-sound');
+            const foodSound = document.getElementById('food-sound');
 
             // Random name generation function
             function generateRandomName() {
@@ -674,7 +685,6 @@ function handleGetLeaderboard($pdo)
 
             p.draw = () => {
                 p.background(17, 24, 39);
-
                 if (isReplayMode) {
                     handleReplayMode();
                     if (replaySnake) replaySnake.show();
@@ -685,7 +695,6 @@ function handleGetLeaderboard($pdo)
                     }
                     snake.show();
                 }
-
                 if (food) {
                     p.fill(255, 82, 82);
                     p.noStroke();
@@ -696,7 +705,6 @@ function handleGetLeaderboard($pdo)
                     p.rect(0, 0, boxSize, boxSize, 4);
                     p.pop();
                 }
-
                 // Update and draw particles
                 for (let i = particles.length - 1; i >= 0; i--) {
                     particles[i].update();
@@ -705,17 +713,19 @@ function handleGetLeaderboard($pdo)
                         particles.splice(i, 1);
                     }
                 }
-
                 if (!isReplayMode && snake && snake.eat(food)) {
                     createParticles(food.x, food.y);
                     placeFood();
-                    
                     // Play snake eat sound
                     if (snakeEatSound) {
                         snakeEatSound.currentTime = 0;
-                        snakeEatSound.play().catch(e => console.log("Sound play prevented by browser:", e));
+                        snakeEatSound.play().catch(e => {});
                     }
-                    
+                    // Play food sound
+                    if (foodSound) {
+                        foodSound.currentTime = 0;
+                        foodSound.play().catch(e => {});
+                    }
                     score++;
                     // Animate score with GSAP
                     gsap.to(scoreEl, {
@@ -877,7 +887,6 @@ function handleGetLeaderboard($pdo)
 
             function logMove(newDirection) {
                 if (!gameId || isReplayMode) return;
-
                 const move = {
                     game_id: gameId,
                     move_sequence: moveSequence++,
@@ -887,9 +896,12 @@ function handleGetLeaderboard($pdo)
                     food_x: food ? food.x / boxSize : 0,
                     food_y: food ? food.y / boxSize : 0
                 };
-
                 gameMoves.push(move);
-
+                // Play move sound
+                if (moveSound) {
+                    moveSound.currentTime = 0;
+                    moveSound.play().catch(e => {});
+                }
                 // Save move to backend (async, no await to avoid blocking)
                 fetch('', {
                     method: 'POST',
@@ -1093,8 +1105,7 @@ function handleGetLeaderboard($pdo)
             }
 
             function gameOver() {
-                if (isReplayMode) return;
-
+                if (isReplayMode || isGameOver) return;
                 isGameOver = true;
                 // Animate final score with GSAP
                 gsap.to(finalScoreEl, {
@@ -1113,12 +1124,24 @@ function handleGetLeaderboard($pdo)
                     duration: 0.5,
                     ease: 'power2.out'
                 });
-
+                // Play intro splash sound again
+                if (introSplashSound) {
+                    introSplashSound.currentTime = 0;
+                    introSplashSound.play().catch(e => {});
+                }
                 // Final game save with updated score
                 if (gameId) {
                     saveGameData();
                 }
-
+                // Show leaderboard directly
+                fetchLeaderboard();
+                document.getElementById('leaderboard-container').style.display = 'block';
+                // Provide exit strategy: allow restart or return to name entry
+                restartButton.onclick = () => {
+                    gameOverEl.style.display = 'none';
+                    nameEntryOverlay.style.display = 'flex';
+                    setupNameEntry();
+                };
                 p.noLoop();
             }
 
