@@ -342,6 +342,56 @@ function handleGetLeaderboard($pdo)
             right: auto;
             left: 1rem;
         }
+
+        #leaderboard-container {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            z-index: 20;
+            background: rgba(0,0,0,0.4);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            width: 320px;
+            max-width: 90vw;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            backdrop-filter: blur(4px);
+            transition: width 0.3s, left 0.3s, right 0.3s;
+        }
+        @media (max-width: 640px) {
+            #leaderboard-container {
+                position: fixed;
+                top: auto;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100vw;
+                max-width: 100vw;
+                border-radius: 0.75rem 0.75rem 0 0;
+                box-shadow: 0 -2px 12px rgba(0,0,0,0.18);
+                padding: 0.5rem 0.5rem 1rem 0.5rem;
+                z-index: 30;
+            }
+            #leaderboard-title {
+                font-size: 1.1rem;
+                margin-bottom: 0.5rem;
+            }
+            #leaderboard-list {
+                font-size: 0.95rem;
+            }
+        }
+        @media (max-width: 400px) {
+            #leaderboard-container {
+                padding: 0.25rem 0.25rem 0.75rem 0.25rem;
+                border-radius: 0.5rem 0.5rem 0 0;
+            }
+        }
+        /* Optionally hide leaderboard on overlays */
+        #name-entry-overlay[style*="display: flex"] ~ #leaderboard-container,
+        #tutorial-overlay[style*="display: flex"] ~ #leaderboard-container,
+        #game-over[style*="display: flex"] ~ #leaderboard-container,
+        #replay-overlay[style*="display: flex"] ~ #leaderboard-container {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -962,12 +1012,16 @@ function handleGetLeaderboard($pdo)
                     replayOverlay.style.display = 'flex';
                     replayInfoEl.textContent = `Replaying ${replayData.game.player_name}'s game (Score: ${replayData.game.score})`;
 
-                    // Initialize replay snake
-                    replaySnake = new Snake();
-                    
-                    // Set initial food position from first move data
+                    // Initialize replay snake with correct position and length
                     if (replayData.moves && replayData.moves.length > 0) {
                         const firstMove = replayData.moves[0];
+                        replaySnake = new Snake();
+                        // Set head position
+                        replaySnake.body = [];
+                        for (let i = 0; i < firstMove.snake_length; i++) {
+                            replaySnake.body.push(p.createVector(firstMove.food_x * boxSize, firstMove.food_y * boxSize));
+                        }
+                        // Set food position
                         food = p.createVector(firstMove.food_x * boxSize, firstMove.food_y * boxSize);
                         food.scale = 1;
                     }
@@ -995,19 +1049,22 @@ function handleGetLeaderboard($pdo)
 
                 if (elapsedReplayTime >= relativeMoveTime / replaySpeed) {
                     replaySnake.setDir(currentMove.direction);
-                    
-                    // Update food position based on recorded data
-                    if (food) {
-                        food.x = currentMove.food_x * boxSize;
-                        food.y = currentMove.food_y * boxSize;
+                    // Update food position for every move
+                    food.x = currentMove.food_x * boxSize;
+                    food.y = currentMove.food_y * boxSize;
+                    // Update snake length for every move
+                    while (replaySnake.body.length < currentMove.snake_length) {
+                        let head = replaySnake.body[replaySnake.body.length - 1].copy();
+                        replaySnake.body.push(head);
                     }
-                    
+                    while (replaySnake.body.length > currentMove.snake_length) {
+                        replaySnake.body.shift();
+                    }
                     replayMoveIndex++;
                 }
 
                 if (!replayPaused) {
                     replaySnake.update();
-
                     // Check if replay is complete
                     if (replayMoveIndex >= replayData.moves.length) {
                         replayPaused = true;
