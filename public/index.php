@@ -361,6 +361,14 @@ function handleGetLeaderboard($pdo)
         </button>
     </div>
 
+    <!-- Audio elements for game sounds -->
+    <audio id="intro-splash-sound" preload="auto">
+        <source src="intro-splash.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="snake-eat-sound" preload="auto">
+        <source src="snake-eat.mp3" type="audio/mpeg">
+    </audio>
+
     <!-- Main Game UI -->
     <div class="w-full max-w-lg text-center mb-4">
         <h1 id="title" class="text-4xl font-game text-green-400 text-content">SNAKE</h1>
@@ -380,11 +388,17 @@ function handleGetLeaderboard($pdo)
             <input type="text" id="player-name-input"
                 class="input-field bg-gray-800 border-2 border-gray-600 text-white text-xl p-4 rounded-lg mb-6 w-80 max-w-full text-center transition-all duration-200 focus:border-green-500 focus:bg-gray-700"
                 placeholder="Your Name" maxlength="20" autocomplete="off" spellcheck="false">
-            <button id="confirm-name-button"
-                class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-lg disabled:opacity-50 disabled:hover:scale-100 text-content"
-                disabled>
-                CONTINUE
-            </button>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button id="confirm-name-button"
+                    class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-lg disabled:opacity-50 disabled:hover:scale-100 text-content"
+                    disabled>
+                    CONTINUE
+                </button>
+                <button id="guest-button"
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-lg text-content">
+                    PLAY AS GUEST
+                </button>
+            </div>
         </div>
 
         <div id="tutorial-overlay"
@@ -558,6 +572,8 @@ function handleGetLeaderboard($pdo)
             let replaySpeed = 1;
             let replayPaused = false;
             let replaySnake = null;
+            let replayStartTime = null;
+            let replayInitialTimestamp = null;
 
             // DOM Elements
             const scoreEl = document.getElementById('score');
@@ -572,11 +588,26 @@ function handleGetLeaderboard($pdo)
             const nameEntryOverlay = document.getElementById('name-entry-overlay');
             const playerNameInput = document.getElementById('player-name-input');
             const confirmNameButton = document.getElementById('confirm-name-button');
+            const guestButton = document.getElementById('guest-button');
             const replayOverlay = document.getElementById('replay-overlay');
             const replayPauseButton = document.getElementById('replay-pause-button');
             const replaySpeedButton = document.getElementById('replay-speed-button');
             const replayExitButton = document.getElementById('replay-exit-button');
             const replayInfoEl = document.getElementById('replay-info');
+            
+            // Audio elements
+            const introSplashSound = document.getElementById('intro-splash-sound');
+            const snakeEatSound = document.getElementById('snake-eat-sound');
+
+            // Random name generation function
+            function generateRandomName() {
+                const adjectives = ['Cool', 'Fast', 'Smart', 'Brave', 'Clever', 'Swift', 'Bold', 'Wise', 'Keen', 'Ace'];
+                const nouns = ['Player', 'Gamer', 'Snake', 'Champion', 'Master', 'Hero', 'Legend', 'Warrior', 'Pro', 'Expert'];
+                const randomNumber = Math.floor(Math.random() * 1000);
+                const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+                const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+                return `${randomAdjective}${randomNoun}${randomNumber}`;
+            }
 
             p.setup = () => {
                 const container = document.getElementById('canvas-container');
@@ -589,6 +620,7 @@ function handleGetLeaderboard($pdo)
                 restartButton.addEventListener('click', resetGame);
                 startButton.addEventListener('click', startGame);
                 confirmNameButton.addEventListener('click', proceedToTutorial);
+                guestButton.addEventListener('click', playAsGuest);
 
                 // Multiple input event listeners for better compatibility
                 playerNameInput.addEventListener('input', validateNameInput);
@@ -677,8 +709,21 @@ function handleGetLeaderboard($pdo)
                 if (!isReplayMode && snake && snake.eat(food)) {
                     createParticles(food.x, food.y);
                     placeFood();
+                    
+                    // Play snake eat sound
+                    if (snakeEatSound) {
+                        snakeEatSound.currentTime = 0;
+                        snakeEatSound.play().catch(e => console.log("Sound play prevented by browser:", e));
+                    }
+                    
                     score++;
-                    scoreEl.textContent = score;
+                    // Animate score with GSAP
+                    gsap.to(scoreEl, {
+                        duration: 0.5,
+                        innerHTML: score,
+                        snap: { innerHTML: 1 },
+                        ease: "power2.out"
+                    });
                     checkRankAndConfetti();
                     if (score > 0 && score % 5 === 0) {
                         level++;
@@ -754,6 +799,12 @@ function handleGetLeaderboard($pdo)
                 playerNameInput.value = '';
                 confirmNameButton.disabled = true;
 
+                // Play intro splash sound
+                if (introSplashSound) {
+                    introSplashSound.currentTime = 0;
+                    introSplashSound.play().catch(e => console.log("Sound play prevented by browser:", e));
+                }
+
                 // Focus the input field after a short delay to ensure it's visible
                 setTimeout(() => {
                     playerNameInput.focus();
@@ -791,6 +842,20 @@ function handleGetLeaderboard($pdo)
                     name,
                     length: name.length,
                     isValid
+                });
+            }
+
+            function playAsGuest() {
+                playerName = generateRandomName();
+                gsap.killTweensOf("#name-entry-overlay");
+                gsap.to(nameEntryOverlay, {
+                    opacity: 0,
+                    duration: 0.5,
+                    onComplete: () => {
+                        nameEntryOverlay.style.display = 'none';
+                        tutorialOverlay.style.display = 'flex';
+                        setupTutorial();
+                    }
                 });
             }
 
@@ -878,6 +943,8 @@ function handleGetLeaderboard($pdo)
                     replayMoveIndex = 0;
                     replayPaused = false;
                     replaySpeed = 1;
+                    replayStartTime = null;
+                    replayInitialTimestamp = null;
 
                     // Hide game UI and show replay UI
                     replayOverlay.style.display = 'flex';
@@ -885,7 +952,13 @@ function handleGetLeaderboard($pdo)
 
                     // Initialize replay snake
                     replaySnake = new Snake();
-                    placeFood();
+                    
+                    // Set initial food position from first move data
+                    if (replayData.moves && replayData.moves.length > 0) {
+                        const firstMove = replayData.moves[0];
+                        food = p.createVector(firstMove.food_x * boxSize, firstMove.food_y * boxSize);
+                        food.scale = 1;
+                    }
 
                     p.loop();
                     p.frameRate(10 * replaySpeed);
@@ -898,11 +971,25 @@ function handleGetLeaderboard($pdo)
             function handleReplayMode() {
                 if (replayPaused || !replayData || replayMoveIndex >= replayData.moves.length) return;
 
-                const currentMove = replayData.moves[replayMoveIndex];
-                const gameTime = Date.now() - gameStartTime;
+                // For the first move, set the start time
+                if (replayMoveIndex === 0 && !replayStartTime) {
+                    replayStartTime = Date.now();
+                    replayInitialTimestamp = replayData.moves[0].timestamp_ms;
+                }
 
-                if (gameTime >= currentMove.timestamp_ms) {
+                const currentMove = replayData.moves[replayMoveIndex];
+                const elapsedReplayTime = Date.now() - replayStartTime;
+                const relativeMoveTime = currentMove.timestamp_ms - replayInitialTimestamp;
+
+                if (elapsedReplayTime >= relativeMoveTime / replaySpeed) {
                     replaySnake.setDir(currentMove.direction);
+                    
+                    // Update food position based on recorded data
+                    if (food) {
+                        food.x = currentMove.food_x * boxSize;
+                        food.y = currentMove.food_y * boxSize;
+                    }
+                    
                     replayMoveIndex++;
                 }
 
@@ -935,6 +1022,11 @@ function handleGetLeaderboard($pdo)
                 isReplayMode = false;
                 replayData = null;
                 replaySnake = null;
+                replayMoveIndex = 0;
+                replayPaused = false;
+                replaySpeed = 1;
+                replayStartTime = null;
+                replayInitialTimestamp = null;
                 replayOverlay.style.display = 'none';
                 p.noLoop();
 
@@ -955,6 +1047,13 @@ function handleGetLeaderboard($pdo)
 
             function startGame() {
                 gsap.killTweensOf("#tutorial-overlay");
+                
+                // Play intro splash sound on game start
+                if (introSplashSound) {
+                    introSplashSound.currentTime = 0;
+                    introSplashSound.play().catch(e => console.log("Sound play prevented by browser:", e));
+                }
+                
                 gsap.to(tutorialOverlay, {
                     opacity: 0,
                     duration: 0.5,
@@ -970,6 +1069,10 @@ function handleGetLeaderboard($pdo)
                 gameStartTime = Date.now();
                 moveSequence = 0;
                 gameMoves = [];
+                // Make sure we have a player name, generate one if needed
+                if (!playerName) {
+                    playerName = generateRandomName();
+                }
                 saveGameData(); // Save initial game state and get game ID
             }
 
@@ -993,7 +1096,13 @@ function handleGetLeaderboard($pdo)
                 if (isReplayMode) return;
 
                 isGameOver = true;
-                finalScoreEl.textContent = score;
+                // Animate final score with GSAP
+                gsap.to(finalScoreEl, {
+                    duration: 1,
+                    innerHTML: score,
+                    snap: { innerHTML: 1 },
+                    ease: "power2.out"
+                });
                 gameOverEl.style.display = 'flex';
                 gsap.fromTo(gameOverEl, {
                     opacity: 0,
@@ -1029,7 +1138,13 @@ function handleGetLeaderboard($pdo)
                 gameMoves = [];
                 gameId = null;
 
-                scoreEl.textContent = score;
+                // Animate score reset with GSAP
+                gsap.to(scoreEl, {
+                    duration: 0.5,
+                    innerHTML: score,
+                    snap: { innerHTML: 1 },
+                    ease: "power2.out"
+                });
                 levelEl.textContent = level;
                 gameOverEl.style.display = 'none';
 
