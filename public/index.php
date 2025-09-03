@@ -237,7 +237,7 @@ function handleGetLeaderboard($pdo)
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
     <title>Snake Game</title>
     <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -255,8 +255,30 @@ function handleGetLeaderboard($pdo)
         background-image: url('snake-game-bg.jpg');
         background-size: cover;
         background-position: center;
+        background-attachment: fixed;
+        background-repeat: no-repeat;
         font-family: 'Poppins', sans-serif;
         overflow: hidden;
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+        min-height: 100vh;
+    }
+
+    /* Glass effect overlay for better readability */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.2);
+        z-index: -1;
     }
 
         /* Arabic text styling */
@@ -278,6 +300,31 @@ function handleGetLeaderboard($pdo)
 
         .font-game {
             font-family: 'Press Start 2P', cursive;
+        }
+
+        /* Glass effect for main game UI */
+        .main-game-ui {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .main-game-ui h1 {
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            margin-bottom: 0.5rem;
+        }
+
+        .main-game-ui .score-level > div {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
         }
 
         /* Input field fonts - supports both LTR and RTL */
@@ -303,11 +350,144 @@ function handleGetLeaderboard($pdo)
             height: 75vh;
             max-width: 800px;
             max-height: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
         }
 
         canvas {
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            border-radius: 15px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                0 4px 16px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            #canvas-container {
+                width: 95vw;
+                height: 60vh;
+                max-height: 60vh;
+                padding: 15px;
+                border-radius: 15px;
+            }
+            
+            canvas {
+                border-radius: 12px;
+            }
+            
+            .main-game-ui {
+                margin-bottom: 1rem;
+            }
+            
+            .main-game-ui h1 {
+                font-size: 2rem;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            }
+            
+            .main-game-ui .score-level {
+                font-size: 1.25rem;
+                gap: 1rem;
+            }
+
+            /* Responsive overlay adjustments */
+            #name-entry-overlay h2,
+            #tutorial-overlay h2,
+            #game-over h2,
+            #replay-overlay h2 {
+                font-size: 2rem;
+                margin-bottom: 1rem;
+            }
+
+            #name-entry-overlay input {
+                width: 90%;
+                font-size: 1rem;
+                padding: 0.75rem;
+            }
+
+            #name-entry-overlay button,
+            #tutorial-overlay button,
+            #game-over button,
+            #replay-overlay button {
+                font-size: 0.9rem;
+                padding: 0.75rem 1.5rem;
+            }
+
+            #tutorial-overlay p {
+                font-size: 1rem;
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #canvas-container {
+                width: 98vw;
+                height: 55vh;
+                max-height: 55vh;
+                padding: 12px;
+                border-radius: 12px;
+            }
+            
+            canvas {
+                border-radius: 10px;
+            }
+            
+            .main-game-ui h1 {
+                font-size: 1.5rem;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            }
+            
+            .main-game-ui .score-level {
+                font-size: 1rem;
+                gap: 0.5rem;
+            }
+
+            /* Extra small screen overlay adjustments */
+            #name-entry-overlay h2,
+            #tutorial-overlay h2,
+            #game-over h2,
+            #replay-overlay h2 {
+                font-size: 1.5rem;
+                margin-bottom: 0.75rem;
+            }
+
+            #name-entry-overlay input {
+                width: 95%;
+                font-size: 0.9rem;
+                padding: 0.6rem;
+            }
+
+            #name-entry-overlay button,
+            #tutorial-overlay button,
+            #game-over button,
+            #replay-overlay button {
+                font-size: 0.8rem;
+                padding: 0.6rem 1.2rem;
+            }
+
+            #tutorial-overlay p {
+                font-size: 0.9rem;
+                margin-bottom: 1rem;
+            }
+
+            #name-entry-overlay .flex {
+                flex-direction: column;
+            }
         }
 
         [dir="rtl"] {
@@ -346,60 +526,182 @@ function handleGetLeaderboard($pdo)
         #leaderboard-container {
             position: absolute;
             top: 4px;
-            left: 4px;
+            left: -260px;
             z-index: 20;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0, 0, 0, 0.5);
             padding: 1rem;
-            border-radius: 0.75rem;
-            width: 320px;
-            max-width: 90vw;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-            backdrop-filter: blur(4px);
-            transition: width 0.3s, left 0.3s, right 0.3s;
+            border-radius: 15px;
+            width: 280px;
+            max-width: 85vw;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease-in-out;
+            transform: translateX(0);
         }
-        @media (max-width: 640px) {
+
+        #leaderboard-container.expanded {
+            left: 4px;
+        }
+
+        #leaderboard-toggle {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 40;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #leaderboard-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        /* Retractable leaderboard on mobile */
+        @media (max-width: 768px) {
             #leaderboard-container {
                 position: fixed;
-                top: auto;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                width: 100vw;
-                max-width: 100vw;
-                border-radius: 0.75rem 0.75rem 0 0;
-                box-shadow: 0 -2px 12px rgba(0,0,0,0.18);
-                padding: 0.5rem 0.5rem 1rem 0.5rem;
-                z-index: 30;
+                top: 10px;
+                left: -260px;
+                width: 280px;
+                max-width: 80vw;
+                background: rgba(0,0,0,0.85);
+                border-radius: 0 0.75rem 0.75rem 0;
+                padding: 0.75rem;
+                z-index: 35;
+                transform: translateX(0);
             }
+            
+            #leaderboard-container.expanded {
+                transform: translateX(260px);
+            }
+            
+            #leaderboard-toggle {
+                position: fixed;
+                top: 10px;
+                left: 10px;
+                z-index: 40;
+                background: rgba(0, 0, 0, 0.6);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                color: white;
+                padding: 0.75rem;
+                border-radius: 12px;
+                font-size: 1.2rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            }
+            
+            #leaderboard-toggle:hover {
+                background: rgba(0, 0, 0, 0.6);
+                transform: scale(1.1);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            }
+            
             #leaderboard-title {
-                font-size: 1.1rem;
+                font-size: 1rem;
                 margin-bottom: 0.5rem;
             }
+            
             #leaderboard-list {
-                font-size: 0.95rem;
+                font-size: 0.85rem;
+                max-height: 200px;
+                overflow-y: auto;
             }
         }
-        @media (max-width: 400px) {
+
+        @media (max-width: 480px) {
             #leaderboard-container {
-                padding: 0.25rem 0.25rem 0.75rem 0.25rem;
-                border-radius: 0.5rem 0.5rem 0 0;
+                left: -240px;
+                width: 250px;
+                max-width: 75vw;
+                padding: 0.5rem;
+            }
+            
+            #leaderboard-container.expanded {
+                transform: translateX(240px);
+            }
+            
+            #leaderboard-title {
+                font-size: 0.9rem;
+            }
+            
+            #leaderboard-list {
+                font-size: 0.8rem;
+                max-height: 180px;
             }
         }
-        /* Optionally hide leaderboard on overlays */
-        #name-entry-overlay[style*="display: flex"] ~ #leaderboard-container,
-        #tutorial-overlay[style*="display: flex"] ~ #leaderboard-container,
-        #game-over[style*="display: flex"] ~ #leaderboard-container,
-        #replay-overlay[style*="display: flex"] ~ #leaderboard-container {
-            display: none !important;
+
+        /* Language toggle responsive positioning */
+        @media (max-width: 768px) {
+            #lang-toggle-container {
+                top: 10px;
+                right: 10px;
+            }
+            
+            #lang-toggle {
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+                border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+                transition: all 0.3s ease;
+            }
+
+            #lang-toggle:hover {
+                background: rgba(255, 255, 255, 0.2);
+                transform: scale(1.05);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        /* Glass effect overlays */
+        .overlay-glass {
+            background: rgba(0, 0, 0, 0.6) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .overlay-glass h2 {
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7) !important;
+        }
+
+        .overlay-glass input {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .overlay-glass button {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .overlay-glass button:hover {
+            background: rgba(255, 255, 255, 0.2) !important;
+            transform: scale(1.05) !important;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
         }
     </style>
 </head>
 
 <body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4" dir="ltr">
 
+    <!-- Leaderboard Toggle Button -->
+    <button id="leaderboard-toggle">
+        📊
+    </button>
+
     <!-- Leaderboard Display -->
-    <div id="leaderboard-container"
-        class="absolute top-4 left-4 z-20 bg-black bg-opacity-40 p-4 rounded-lg w-64 shadow-lg backdrop-blur-sm">
+    <div id="leaderboard-container">
         <h3 id="leaderboard-title" class="text-lg font-game text-yellow-400 mb-2 text-center text-content">LEADERBOARD</h3>
         <ol id="leaderboard-list" class="list-decimal list-inside text-white space-y-1">
             <li class="opacity-50">Loading...</li>
@@ -429,10 +731,10 @@ function handleGetLeaderboard($pdo)
     </audio>
 
     <!-- Main Game UI -->
-    <div class="w-full max-w-lg text-center mb-4">
+    <div class="w-full max-w-lg text-center mb-4 main-game-ui">
         <h1 id="title" class="text-4xl font-game text-green-400 text-content">SNAKE</h1>
         <p id="subtitle" class="text-gray-400 mt-2 text-content">Swipe anywhere to control the snake</p>
-        <div class="mt-4 text-2xl font-game flex justify-center items-center gap-8">
+        <div class="mt-4 text-2xl font-game flex justify-center items-center gap-8 score-level">
             <div class="text-content"><span id="score-label">SCORE</span>: <span id="score" class="text-yellow-400">0</span></div>
             <div class="text-content"><span id="level-label">LEVEL</span>: <span id="level" class="text-cyan-400">1</span></div>
         </div>
@@ -442,67 +744,67 @@ function handleGetLeaderboard($pdo)
     <div id="canvas-container" class="relative">
         <!-- Name Entry Overlay -->
         <div id="name-entry-overlay"
-            class="absolute inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center rounded-lg text-center p-4 z-20">
+            class="absolute inset-0 overlay-glass flex flex-col items-center justify-center rounded-lg text-center p-4 z-20">
             <h2 id="name-entry-title" class="text-4xl font-game text-yellow-400 mb-6 text-content">ENTER YOUR NAME</h2>
             <input type="text" id="player-name-input"
-                class="input-field bg-gray-800 border-2 border-gray-600 text-white text-xl p-4 rounded-lg mb-6 w-80 max-w-full text-center transition-all duration-200 focus:border-green-500 focus:bg-gray-700"
+                class="input-field text-white text-xl p-4 rounded-lg mb-6 w-80 max-w-full text-center transition-all duration-200"
                 placeholder="Your Name" maxlength="20" autocomplete="off" spellcheck="false">
             <div class="flex flex-col sm:flex-row gap-4">
                 <button id="confirm-name-button"
-                    class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-lg disabled:opacity-50 disabled:hover:scale-100 text-content"
+                    class="text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform font-game text-lg disabled:opacity-50 disabled:hover:scale-100 text-content"
                     disabled>
                     CONTINUE
                 </button>
                 <button id="guest-button"
-                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-lg text-content">
+                    class="text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform font-game text-lg text-content">
                     PLAY AS GUEST
                 </button>
             </div>
         </div>
 
         <div id="tutorial-overlay"
-            class="absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center rounded-lg text-center p-4 z-10 hidden">
+            class="absolute inset-0 overlay-glass flex flex-col items-center justify-center rounded-lg text-center p-4 z-10 hidden">
             <h2 id="tutorial-title" class="text-4xl font-game text-yellow-400 mb-6 text-content">HOW TO PLAY</h2>
             <p id="tutorial-text" class="text-xl text-gray-200 mb-8 text-content">Swipe anywhere on the screen to guide the snake.
             </p>
             <button id="start-button"
-                class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-lg text-content">
+                class="text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform font-game text-lg text-content">
                 START GAME
             </button>
             <div class="absolute bottom-4 text-gray-500 text-sm">
-                <p id="credits">Created by Gemini</p>
-                <p id="copyright">&copy; 2024. All Rights Reserved.</p>
+                <p id="credits">Created by HASAN ALDOY @aldoyh</p>
+                <p id="copyright">&copy; <?php echo date("Y"); ?>. All Rights Reserved.</p>
             </div>
         </div>
 
         <div id="game-over"
-            class="absolute inset-0 bg-black bg-opacity-70 flex-col items-center justify-center rounded-lg text-center hidden">
+            class="absolute inset-0 overlay-glass flex-col items-center justify-center rounded-lg text-center hidden">
             <h2 id="game-over-title" class="text-5xl font-game text-red-500 text-content">GAME OVER</h2>
             <p class="mt-4 text-xl text-gray-300 text-content"><span id="final-score-label">Your score</span>: <span id="final-score"
                     class="font-bold text-yellow-300">0</span></p>
             <button id="restart-button"
-                class="mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-sm text-content">
+                class="mt-6 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform font-game text-sm text-content">
                 RESTART
             </button>
         </div>
 
         <!-- Replay Overlay -->
         <div id="replay-overlay"
-            class="absolute inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center rounded-lg text-center p-4 z-15 hidden">
+            class="absolute inset-0 overlay-glass flex flex-col items-center justify-center rounded-lg text-center p-4 z-15 hidden">
             <h2 id="replay-title" class="text-3xl font-game text-cyan-400 mb-4">REPLAY MODE</h2>
             <p id="replay-info" class="text-lg text-gray-300 mb-4">Replaying game...</p>
             <div class="flex gap-4 mb-4">
                 <button id="replay-pause-button"
-                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-sm">
+                    class="text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform font-game text-sm">
                     PAUSE
                 </button>
                 <button id="replay-speed-button"
-                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-sm">
+                    class="text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform font-game text-sm">
                     SPEED: 1x
                 </button>
             </div>
             <button id="replay-exit-button"
-                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform hover:scale-105 font-game text-sm">
+                class="text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform font-game text-sm">
                 EXIT REPLAY
             </button>
         </div>
@@ -653,12 +955,60 @@ function handleGetLeaderboard($pdo)
             const replaySpeedButton = document.getElementById('replay-speed-button');
             const replayExitButton = document.getElementById('replay-exit-button');
             const replayInfoEl = document.getElementById('replay-info');
+            const leaderboardContainer = document.getElementById('leaderboard-container');
+            const leaderboardToggle = document.getElementById('leaderboard-toggle');
             
             // Audio elements
             const introSplashSound = document.getElementById('intro-splash-sound');
             const snakeEatSound = document.getElementById('snake-eat-sound');
             const moveSound = document.getElementById('move-sound');
             const foodSound = document.getElementById('food-sound');
+
+            // Mobile leaderboard state
+            let leaderboardExpanded = false;
+
+            // Setup mobile leaderboard toggle
+            function setupMobileLeaderboard() {
+                // Leaderboard is retracted by default on all devices
+                leaderboardToggle.style.display = 'block';
+                leaderboardContainer.classList.remove('expanded');
+                leaderboardExpanded = false;
+                
+                // Add click listener if not already added
+                leaderboardToggle.removeEventListener('click', toggleLeaderboard);
+                leaderboardToggle.addEventListener('click', toggleLeaderboard);
+            }
+
+            function toggleLeaderboard() {
+                leaderboardExpanded = !leaderboardExpanded;
+                if (leaderboardExpanded) {
+                    leaderboardContainer.classList.add('expanded');
+                } else {
+                    leaderboardContainer.classList.remove('expanded');
+                }
+            }
+
+            // Hide/show leaderboard based on overlay state
+            function setLeaderboardVisibility(show) {
+                // Always start retracted, but allow showing when requested
+                if (show) {
+                    leaderboardToggle.style.display = 'block';
+                    // Don't auto-expand, let user toggle manually
+                } else {
+                    leaderboardToggle.style.display = 'block';
+                    leaderboardContainer.classList.remove('expanded');
+                    leaderboardExpanded = false;
+                }
+            }
+
+            // Handle window resize
+            function handleResize() {
+                setupMobileLeaderboard();
+                const container = document.getElementById('canvas-container');
+                p.resizeCanvas(container.offsetWidth, container.offsetHeight);
+                cols = p.floor(p.width / boxSize);
+                rows = p.floor(p.height / boxSize);
+            }
 
             // Random name generation function
             function generateRandomName() {
@@ -711,6 +1061,10 @@ function handleGetLeaderboard($pdo)
                 replaySpeedButton.addEventListener('click', cycleReplaySpeed);
                 replayExitButton.addEventListener('click', exitReplay);
 
+                // Setup mobile leaderboard
+                setupMobileLeaderboard();
+                window.addEventListener('resize', handleResize);
+
                 p.noLoop();
                 setupNameEntry();
                 fetchLeaderboard();
@@ -727,14 +1081,12 @@ function handleGetLeaderboard($pdo)
             };
 
             p.windowResized = () => {
-                const container = document.getElementById('canvas-container');
-                p.resizeCanvas(container.offsetWidth, container.offsetHeight);
-                cols = p.floor(p.width / boxSize);
-                rows = p.floor(p.height / boxSize);
+                handleResize();
             };
 
             p.draw = () => {
-                p.background(17, 24, 39);
+                // Clear canvas for transparency now that backdrop blur is removed
+                p.clear();
                 if (isReplayMode) {
                     handleReplayMode();
                     if (replaySnake) replaySnake.show();
@@ -858,6 +1210,9 @@ function handleGetLeaderboard($pdo)
                 // Clear any previous input
                 playerNameInput.value = '';
                 confirmNameButton.disabled = true;
+
+                // Hide leaderboard on mobile during name entry
+                setLeaderboardVisibility(false);
 
                 // Play intro splash sound
                 if (introSplashSound) {
@@ -1001,6 +1356,12 @@ function handleGetLeaderboard($pdo)
                     if (!response.ok) throw new Error('Failed to fetch replay data');
 
                     replayData = await response.json();
+                    
+                    // Validate replay data
+                    if (!replayData.game || !replayData.moves || replayData.moves.length === 0) {
+                        throw new Error('Invalid replay data');
+                    }
+                    
                     isReplayMode = true;
                     replayMoveIndex = 0;
                     replayPaused = false;
@@ -1016,12 +1377,20 @@ function handleGetLeaderboard($pdo)
                     if (replayData.moves && replayData.moves.length > 0) {
                         const firstMove = replayData.moves[0];
                         replaySnake = new Snake();
-                        // Set head position
-                        replaySnake.body = [];
-                        for (let i = 0; i < firstMove.snake_length; i++) {
-                            replaySnake.body.push(p.createVector(firstMove.food_x * boxSize, firstMove.food_y * boxSize));
+                        // Initialize snake at the correct starting position
+                        replaySnake.body = [p.createVector(
+                            Math.floor(cols / 2) * boxSize, 
+                            Math.floor(rows / 2) * boxSize
+                        )];
+                        replaySnake.xdir = 1;
+                        replaySnake.ydir = 0;
+                        
+                        // If the first move has a different length, adjust the snake
+                        while (replaySnake.body.length < firstMove.snake_length) {
+                            replaySnake.grow();
                         }
-                        // Set food position
+                        
+                        // Set food position from first move
                         food = p.createVector(firstMove.food_x * boxSize, firstMove.food_y * boxSize);
                         food.scale = 1;
                     }
@@ -1030,46 +1399,57 @@ function handleGetLeaderboard($pdo)
                     p.frameRate(10 * replaySpeed);
                 } catch (error) {
                     console.error('Failed to start replay:', error);
-                    alert('Failed to load replay data');
+                    alert('Failed to load replay data: ' + error.message);
+                    // Exit replay mode on error
+                    isReplayMode = false;
+                    replayOverlay.style.display = 'none';
+                    if (p.isLooping()) {
+                        p.noLoop();
+                    }
                 }
             }
 
             function handleReplayMode() {
-                if (replayPaused || !replayData || replayMoveIndex >= replayData.moves.length) return;
+                try {
+                    if (replayPaused || !replayData || replayMoveIndex >= replayData.moves.length) return;
 
-                // For the first move, set the start time
-                if (replayMoveIndex === 0 && !replayStartTime) {
-                    replayStartTime = Date.now();
-                    replayInitialTimestamp = replayData.moves[0].timestamp_ms;
-                }
-
-                const currentMove = replayData.moves[replayMoveIndex];
-                const elapsedReplayTime = Date.now() - replayStartTime;
-                const relativeMoveTime = currentMove.timestamp_ms - replayInitialTimestamp;
-
-                if (elapsedReplayTime >= relativeMoveTime / replaySpeed) {
-                    replaySnake.setDir(currentMove.direction);
-                    // Update food position for every move
-                    food.x = currentMove.food_x * boxSize;
-                    food.y = currentMove.food_y * boxSize;
-                    // Update snake length for every move
-                    while (replaySnake.body.length < currentMove.snake_length) {
-                        let head = replaySnake.body[replaySnake.body.length - 1].copy();
-                        replaySnake.body.push(head);
+                    // For the first move, set the start time
+                    if (replayMoveIndex === 0 && !replayStartTime) {
+                        replayStartTime = Date.now();
+                        replayInitialTimestamp = replayData.moves[0].timestamp_ms;
                     }
-                    while (replaySnake.body.length > currentMove.snake_length) {
-                        replaySnake.body.shift();
-                    }
-                    replayMoveIndex++;
-                }
 
-                if (!replayPaused) {
-                    replaySnake.update();
-                    // Check if replay is complete
-                    if (replayMoveIndex >= replayData.moves.length) {
-                        replayPaused = true;
-                        replayInfoEl.textContent = 'Replay completed!';
+                    const currentMove = replayData.moves[replayMoveIndex];
+                    const elapsedReplayTime = Date.now() - replayStartTime;
+                    const relativeMoveTime = currentMove.timestamp_ms - replayInitialTimestamp;
+
+                    if (elapsedReplayTime >= relativeMoveTime / replaySpeed) {
+                        // Set direction and update snake
+                        replaySnake.setDir(currentMove.direction);
+                        replaySnake.update();
+                        
+                        // Update food position
+                        food.x = currentMove.food_x * boxSize;
+                        food.y = currentMove.food_y * boxSize;
+                        
+                        // Handle snake growth - if current length is greater than previous, snake ate food
+                        // We need to grow the snake until it reaches the correct length
+                        while (replaySnake.body.length < currentMove.snake_length) {
+                            replaySnake.grow();
+                        }
+                        
+                        replayMoveIndex++;
+                        
+                        // Check if replay is complete after processing the move
+                        if (replayMoveIndex >= replayData.moves.length) {
+                            replayPaused = true;
+                            replayInfoEl.textContent = 'Replay completed!';
+                        }
                     }
+                } catch (error) {
+                    console.error('Error during replay:', error);
+                    replayPaused = true;
+                    replayInfoEl.textContent = 'Replay error: ' + error.message;
                 }
             }
 
@@ -1084,7 +1464,8 @@ function handleGetLeaderboard($pdo)
                 const currentIndex = speeds.indexOf(replaySpeed);
                 replaySpeed = speeds[(currentIndex + 1) % speeds.length];
                 replaySpeedButton.textContent = `${translations[currentLang].speedButton}: ${replaySpeed}x`;
-                p.frameRate(10 * replaySpeed);
+                // Update frame rate but ensure it's at least 1
+                p.frameRate(Math.max(1, 10 * replaySpeed));
             }
 
             function exitReplay() {
@@ -1097,7 +1478,23 @@ function handleGetLeaderboard($pdo)
                 replayStartTime = null;
                 replayInitialTimestamp = null;
                 replayOverlay.style.display = 'none';
-                p.noLoop();
+                
+                // Reset game state
+                isGameOver = false;
+                score = 0;
+                level = 1;
+                
+                // Re-initialize the game
+                snake = new Snake();
+                placeFood();
+                
+                // Reset UI
+                scoreEl.textContent = score;
+                levelEl.textContent = level;
+                
+                // Restart the game loop
+                p.frameRate(10);
+                p.loop();
 
                 // Return to name entry
                 nameEntryOverlay.style.display = 'flex';
@@ -1105,6 +1502,7 @@ function handleGetLeaderboard($pdo)
             }
 
             function setupTutorial() {
+                setLeaderboardVisibility(false);
                 gsap.to("#tutorial-overlay", {
                     duration: 0.8,
                     opacity: 0.9,
@@ -1135,6 +1533,7 @@ function handleGetLeaderboard($pdo)
 
             function initializeNewGame() {
                 resetGame();
+                setLeaderboardVisibility(true);
                 gameStartTime = Date.now();
                 moveSequence = 0;
                 gameMoves = [];
@@ -1164,6 +1563,7 @@ function handleGetLeaderboard($pdo)
             function gameOver() {
                 if (isReplayMode || isGameOver) return;
                 isGameOver = true;
+                setLeaderboardVisibility(false);
                 // Animate final score with GSAP
                 gsap.to(finalScoreEl, {
                     duration: 1,
@@ -1192,7 +1592,6 @@ function handleGetLeaderboard($pdo)
                 }
                 // Show leaderboard directly
                 fetchLeaderboard();
-                document.getElementById('leaderboard-container').style.display = 'block';
                 // Provide exit strategy: allow restart or return to name entry
                 restartButton.onclick = () => {
                     gameOverEl.style.display = 'none';
