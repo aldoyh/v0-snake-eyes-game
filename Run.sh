@@ -25,4 +25,6 @@ find_free_port() {
 PORT=$(find_free_port)
 
 echo "Starting server on port $PORT..."
+# Record the chosen port so cli.php can display it
+echo "$PORT" > .server_port
 php -S localhost:$PORT -t public/

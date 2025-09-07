@@ -1,134 +1,171 @@
 #!/usr/bin/env php
 <?php
 
-/**
- * CLI tool for Snake Eyes Game database management
- * 
- * Usage:
- *   php cli.php reset        - Reset the database (delete all data)
- *   php cli.php vitals       - Check database vitals (record counts, etc.)
- *   php cli.php help         - Show help information
- */
+// Simple CLI for Snake Eyes Game
+// Usage:
+//   php cli.php                      # Start dev server (default)
+//   php cli.php start                # Start dev server
+//   php cli.php reset-db             # Reset SQLite database (drops and recreates)
+//   php cli.php help                 # Show help
 
-// Database configuration
-$dbPath = __DIR__ . '/game_scores.db';
+function println(string $msg = ''): void { echo $msg . "\n"; }
 
-// Check if running from command line
-if (php_sapi_name() !== 'cli') {
-    die("This script can only be run from the command line.\n");
+function show_help(): void {
+    println('Snake Eyes Game - CLI');
+    println('====================');
+    println('Commands:');
+    println('  start            Start development server');
+    println('  reset-db         Reset SQLite database (game_scores.db)');
+    println('  help             Show this help');
 }
 
-// Get command line arguments
-$args = $argv ?? [];
-$command = $args[1] ?? 'help';
-
-try {
-    // Connect to database
-    $pdo = new PDO("sqlite:$dbPath");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
-    switch ($command) {
-        case 'reset':
-            resetDatabase($pdo);
-            break;
-        case 'vitals':
-            checkVitals($pdo);
-            break;
-        case 'help':
-        default:
-            showHelp();
-            break;
-    }
-} catch (Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n";
-    exit(1);
+function get_db_path(): string {
+    return __DIR__ . '/game_scores.db';
 }
 
-/**
- * Reset the database by deleting all records
- */
-function resetDatabase($pdo) {
-    echo "Resetting database...\n";
-    
-    // Delete all records from tables
-    $tables = ['games', 'game_moves', 'scores'];
-    foreach ($tables as $table) {
-        $stmt = $pdo->prepare("DELETE FROM $table");
-        $stmt->execute();
-        echo "Deleted all records from $table table\n";
-    }
-    
-    echo "Database reset completed successfully!\n";
+function recreate_schema(PDO $pdo): void {
+    // Create tables (match public/index.php schema)
+    $pdo->exec("CREATE TABLE IF NOT EXISTS games (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        player_name TEXT NOT NULL,
+        score INTEGER NOT NULL,
+        level INTEGER NOT NULL,
+        game_duration INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS game_moves (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        game_id INTEGER NOT NULL,
+        move_sequence INTEGER NOT NULL,
+        direction TEXT NOT NULL,
+        timestamp_ms INTEGER NOT NULL,
+        snake_length INTEGER NOT NULL,
+        food_x INTEGER NOT NULL,
+        food_y INTEGER NOT NULL,
+        FOREIGN KEY (game_id) REFERENCES games (id)
+    )");
+
+    // Legacy scores table used by leaderboard fallback
+    $pdo->exec("CREATE TABLE IF NOT EXISTS scores (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        player TEXT NOT NULL,
+        score INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
 }
 
-/**
- * Check database vitals and display information
- */
-function checkVitals($pdo) {
-    echo "Checking database vitals...\n\n";
-    
-    // Get table information
-    $tables = ['games', 'game_moves', 'scores'];
-    
-    foreach ($tables as $table) {
-        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM $table");
-        $stmt->execute();
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $count = $result['count'];
-        
-        echo "$table: $count records\n";
-    }
-    
-    echo "\n";
-    
-    // Get top scores
-    echo "Top 5 scores:\n";
-    $stmt = $pdo->prepare("SELECT player_name, score FROM games ORDER BY score DESC LIMIT 5");
-    $stmt->execute();
-    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    if (empty($results)) {
-        echo "No scores recorded yet.\n";
+function reset_db(): int {
+    $dbPath = get_db_path();
+    println('Resetting database at: ' . $dbPath);
+
+    // Remove existing DB file if present
+    if (file_exists($dbPath)) {
+        if (!@unlink($dbPath)) {
+            println('Error: Unable to delete existing database file. Check permissions.');
+            return 1;
+        }
+        println('Deleted existing database file.');
     } else {
-        foreach ($results as $index => $row) {
-            echo ($index + 1) . ". " . $row['player_name'] . " - " . $row['score'] . "\n";
+        println('No existing database file found.');
+    }
+
+    try {
+        $pdo = new PDO('sqlite:' . $dbPath);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        recreate_schema($pdo);
+        println('Database recreated successfully.');
+        return 0;
+    } catch (Throwable $e) {
+        println('Failed to recreate database: ' . $e->getMessage());
+        return 1;
+    }
+}
+
+function start_server(): int {
+    println('Snake Eyes Game - Enhanced Edition');
+    println('==================================');
+    println('');
+    println('Starting development server...');
+
+    // If we previously recorded a port and it's active, reuse it
+    $portFile = __DIR__ . '/.server_port';
+    if (file_exists($portFile)) {
+        $existingPort = trim(@file_get_contents($portFile));
+        if ($existingPort !== '') {
+            exec("lsof -i :$existingPort > /dev/null 2>&1", $chkOut, $chkRc);
+            if ($chkRc === 0) {
+                println("Server is already running on port $existingPort");
+                println("Visit http://localhost:$existingPort to play the game");
+                return 0;
+            }
         }
     }
-    
-    echo "\n";
-    
-    // Database file information
-    $dbFileSize = filesize(__DIR__ . '/game_scores.db');
-    echo "Database file size: " . formatBytes($dbFileSize) . "\n";
-    
-    echo "Vitals check completed!\n";
-}
 
-/**
- * Format bytes to human readable format
- */
-function formatBytes($size, $precision = 2) {
-    $units = array('B', 'KB', 'MB', 'GB', 'TB');
-    
-    for ($i = 0; $size > 1024 && $i < count($units) - 1; $i++) {
-        $size /= 1024;
+    // Make sure Run.sh is executable
+    exec('chmod +x Run.sh');
+
+    // Start the server in background
+    exec('./Run.sh > /dev/null 2>&1 &');
+
+    // Wait a moment for server to start
+    sleep(2);
+
+    // Try to detect the chosen port
+    $port = null;
+    if (file_exists($portFile)) {
+        $port = trim(@file_get_contents($portFile));
     }
-    
-    return round($size, $precision) . ' ' . $units[$i];
+    if ($port === null || $port === '') {
+        // Fallback: probe common ports 8000-8010
+        for ($p = 8000; $p <= 8010; $p++) {
+            exec("lsof -i :$p > /dev/null 2>&1", $out, $rc);
+            if ($rc === 0) { $port = (string)$p; break; }
+        }
+    }
+
+    println('Server started successfully!');
+    if ($port) {
+        println("Visit http://localhost:$port to play the game");
+    } else {
+        println('Visit http://localhost:8000 to play the game');
+    }
+
+    println('');
+    println('Game Features:');
+    println('  • Classic snake gameplay with modern enhancements');
+    println('  • Power-up system (Speed, Shield, Slow Motion)');
+    println('  • Dynamic obstacles');
+    println('  • Progressive difficulty');
+    println('  • Leaderboard with replay functionality');
+    println('  • Full English/Arabic language support');
+    println('  • Responsive design for all devices');
+
+    println('');
+    println('Controls:');
+    println('  • Swipe/Tap on mobile to change direction');
+    println('  • Arrow keys on desktop');
+
+    println('');
+    println('Press Ctrl+C to exit this script (server will continue running)');
+
+    // Keep script running to show server output
+    while (true) {
+        sleep(1);
+    }
 }
 
-/**
- * Show help information
- */
-function showHelp() {
-    echo "Snake Eyes Game CLI Tool\n";
-    echo "========================\n\n";
-    echo "Usage: php cli.php [command]\n\n";
-    echo "Commands:\n";
-    echo "  reset    - Reset the database (delete all data)\n";
-    echo "  vitals   - Check database vitals (record counts, etc.)\n";
-    echo "  help     - Show this help information\n\n";
-    echo "Examples:\n";
-    echo "  php cli.php reset\n";
-    echo "  php cli.php vitals\n";
+// Entry point
+$command = $argv[1] ?? 'start';
+switch ($command) {
+    case 'help':
+    case '--help':
+    case '-h':
+        show_help();
+        exit(0);
+    case 'reset-db':
+        exit(reset_db());
+    case 'start':
+    default:
+        exit(start_server());
 }

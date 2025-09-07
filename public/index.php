@@ -238,7 +238,7 @@ function handleGetLeaderboard($pdo)
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
-    <title>Snake Game</title>
+    <title>Snake Eyes - Modern Snake Game</title>
     <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
@@ -248,38 +248,58 @@ function handleGetLeaderboard($pdo)
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Press+Start+2P&family=Tajawal:wght@400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Press+Start+2P&family=Tajawal:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <style>
+        :root {
+            --primary-green: #10b981;
+            --secondary-green: #059669;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+            --accent-amber: #f59e0b;
+            --dark-bg: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: rgba(0, 0, 0, 0.3);
+        }
+        
         body {
-        background-image: url('snake-game-bg.jpg');
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        background-repeat: no-repeat;
-        font-family: 'Poppins', sans-serif;
-        overflow: hidden;
-        touch-action: manipulation;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-        -webkit-touch-callout: none;
-        -webkit-tap-highlight-color: transparent;
-        min-height: 100vh;
-    }
+            background-image: url('snake-game-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
 
-    /* Glass effect overlay for better readability */
-    body::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.2);
-        z-index: -1;
-    }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Glass effect overlay for better readability */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+            z-index: -1;
+        }
 
         /* Arabic text styling */
         body[dir="rtl"] {
@@ -291,7 +311,10 @@ function handleGetLeaderboard($pdo)
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
+            /* Allow selecting/caret in inputs even if body disables selection */
+            user-select: text;
+            -webkit-user-select: text;
         }
 
         input[type="text"]:focus {
@@ -304,27 +327,35 @@ function handleGetLeaderboard($pdo)
 
         /* Glass effect for main game UI */
         .main-game-ui {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.05); /* More transparent */
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
             box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+                0 8px 32px var(--glass-shadow),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
 
         .main-game-ui h1 {
             text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
             margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--primary-green), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .main-game-ui .score-level > div {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05); /* More transparent */
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
             padding: 0.75rem 1rem;
             text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         /* Input field fonts - supports both LTR and RTL */
@@ -338,8 +369,8 @@ function handleGetLeaderboard($pdo)
 
         .input-field:focus {
             outline: none;
-            border: 2px solid #10b981;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+            border: 2px solid var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
         }
 
         #canvas-container {
@@ -352,19 +383,21 @@ function handleGetLeaderboard($pdo)
             max-height: 800px;
             margin: 0 auto;
             padding: 20px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.05); /* More transparent */
+            border: 1px solid var(--glass-border);
             box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                0 12px 40px var(--glass-shadow),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
                 inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(12px); /* Slightly less blur for better performance */
+            -webkit-backdrop-filter: blur(12px);
         }
 
         canvas {
-            border-radius: 15px;
+            border-radius: 18px;
             box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.4),
+                0 8px 32px var(--glass-shadow),
                 0 4px 16px rgba(0, 0, 0, 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
             touch-action: none;
@@ -373,8 +406,78 @@ function handleGetLeaderboard($pdo)
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
-            background: rgba(0, 0, 0, 0.15);
+            background: rgba(0, 0, 0, 0.1); /* More transparent background */
             border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Game controls buttons */
+        .control-btn {
+            background: rgba(255, 255, 255, 0.05); /* More transparent */
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.1); /* More transparent on hover */
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        .control-btn.primary {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.8), rgba(5, 150, 105, 0.8)); /* More transparent */
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: white;
+        }
+
+        .control-btn.secondary {
+            background: rgba(255, 255, 255, 0.05); /* More transparent */
+            border: 1px solid var(--glass-border);
+            color: white;
+        }
+
+        /* Overlay styling */
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.8); /* More transparent */
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            z-index: 20;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .overlay h2 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(90deg, var(--primary-green), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .overlay p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            max-width: 80%;
+            line-height: 1.6;
         }
 
         /* Mobile responsive adjustments */
@@ -384,15 +487,16 @@ function handleGetLeaderboard($pdo)
                 height: 60vh;
                 max-height: 60vh;
                 padding: 15px;
-                border-radius: 15px;
+                border-radius: 20px;
             }
             
             canvas {
-                border-radius: 12px;
+                border-radius: 15px;
             }
             
             .main-game-ui {
                 margin-bottom: 1rem;
+                padding: 1rem;
             }
             
             .main-game-ui h1 {
@@ -406,12 +510,20 @@ function handleGetLeaderboard($pdo)
             }
 
             /* Responsive overlay adjustments */
-            #name-entry-overlay h2,
-            #tutorial-overlay h2,
-            #game-over h2,
-            #replay-overlay h2 {
-                font-size: 2rem;
+            .overlay {
+                padding: 1.5rem;
+                border-radius: 15px;
+            }
+
+            .overlay h2 {
+                font-size: 1.75rem;
                 margin-bottom: 1rem;
+            }
+
+            .overlay p {
+                font-size: 1rem;
+                margin-bottom: 1.5rem;
+                max-width: 90%;
             }
 
             #name-entry-overlay input {
@@ -420,17 +532,9 @@ function handleGetLeaderboard($pdo)
                 padding: 0.75rem;
             }
 
-            #name-entry-overlay button,
-            #tutorial-overlay button,
-            #game-over button,
-            #replay-overlay button {
+            .control-btn {
                 font-size: 0.9rem;
-                padding: 0.75rem 1.5rem;
-            }
-
-            #tutorial-overlay p {
-                font-size: 1rem;
-                margin-bottom: 1.5rem;
+                padding: 0.75rem 1.25rem;
             }
         }
 
@@ -440,11 +544,11 @@ function handleGetLeaderboard($pdo)
                 height: 55vh;
                 max-height: 55vh;
                 padding: 12px;
-                border-radius: 12px;
+                border-radius: 15px;
             }
             
             canvas {
-                border-radius: 10px;
+                border-radius: 12px;
             }
             
             .main-game-ui h1 {
@@ -458,12 +562,20 @@ function handleGetLeaderboard($pdo)
             }
 
             /* Extra small screen overlay adjustments */
-            #name-entry-overlay h2,
-            #tutorial-overlay h2,
-            #game-over h2,
-            #replay-overlay h2 {
+            .overlay {
+                padding: 1rem;
+                border-radius: 12px;
+            }
+
+            .overlay h2 {
                 font-size: 1.5rem;
                 margin-bottom: 0.75rem;
+            }
+
+            .overlay p {
+                font-size: 0.9rem;
+                margin-bottom: 1rem;
+                max-width: 95%;
             }
 
             #name-entry-overlay input {
@@ -472,21 +584,14 @@ function handleGetLeaderboard($pdo)
                 padding: 0.6rem;
             }
 
-            #name-entry-overlay button,
-            #tutorial-overlay button,
-            #game-over button,
-            #replay-overlay button {
+            .control-btn {
                 font-size: 0.8rem;
-                padding: 0.6rem 1.2rem;
-            }
-
-            #tutorial-overlay p {
-                font-size: 0.9rem;
-                margin-bottom: 1rem;
+                padding: 0.6rem 1rem;
             }
 
             #name-entry-overlay .flex {
                 flex-direction: column;
+                gap: 0.75rem;
             }
         }
 
@@ -528,9 +633,9 @@ function handleGetLeaderboard($pdo)
             top: 4px;
             left: -260px;
             z-index: 20;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(15, 23, 42, 0.85);
             padding: 1rem;
-            border-radius: 15px;
+            border-radius: 20px;
             width: 280px;
             max-width: 85vw;
             box-shadow: 
@@ -539,6 +644,8 @@ function handleGetLeaderboard($pdo)
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease-in-out;
             transform: translateX(0);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
 
         #leaderboard-container.expanded {
@@ -550,7 +657,7 @@ function handleGetLeaderboard($pdo)
             top: 10px;
             left: 10px;
             z-index: 40;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(15, 23, 42, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
             padding: 0.75rem;
@@ -558,10 +665,13 @@ function handleGetLeaderboard($pdo)
             font-size: 1.2rem;
             cursor: pointer;
             transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         #leaderboard-toggle:hover {
             transform: scale(1.1);
+            background: rgba(15, 23, 42, 0.8);
         }
 
         /* Retractable leaderboard on mobile */
@@ -572,11 +682,13 @@ function handleGetLeaderboard($pdo)
                 left: -260px;
                 width: 280px;
                 max-width: 80vw;
-                background: rgba(0,0,0,0.85);
+                background: rgba(15, 23, 42, 0.95);
                 border-radius: 0 0.75rem 0.75rem 0;
                 padding: 0.75rem;
                 z-index: 35;
                 transform: translateX(0);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
             }
             
             #leaderboard-container.expanded {
@@ -588,7 +700,7 @@ function handleGetLeaderboard($pdo)
                 top: 10px;
                 left: 10px;
                 z-index: 40;
-                background: rgba(0, 0, 0, 0.6);
+                background: rgba(15, 23, 42, 0.7);
                 border: 1px solid rgba(255, 255, 255, 0.2);
                 color: white;
                 padding: 0.75rem;
@@ -597,10 +709,12 @@ function handleGetLeaderboard($pdo)
                 cursor: pointer;
                 transition: all 0.3s ease;
                 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
             }
             
             #leaderboard-toggle:hover {
-                background: rgba(0, 0, 0, 0.6);
+                background: rgba(15, 23, 42, 0.8);
                 transform: scale(1.1);
                 box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
             }
@@ -654,6 +768,8 @@ function handleGetLeaderboard($pdo)
                 border-radius: 12px;
                 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
                 transition: all 0.3s ease;
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
             }
 
             #lang-toggle:hover {
@@ -665,8 +781,10 @@ function handleGetLeaderboard($pdo)
 
         /* Glass effect overlays */
         .overlay-glass {
-            background: rgba(0, 0, 0, 0.6) !important;
+            background: rgba(15, 23, 42, 0.8) !important; /* Slightly more transparent */
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
         }
 
         .overlay-glass h2 {
@@ -676,19 +794,145 @@ function handleGetLeaderboard($pdo)
         .overlay-glass input {
             background: rgba(255, 255, 255, 0.1) !important;
             border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            backdrop-filter: blur(8px) !important;
+            -webkit-backdrop-filter: blur(8px) !important;
         }
 
-        .overlay-glass button {
+        .overlay-glass .control-btn {
             background: rgba(255, 255, 255, 0.1) !important;
             border: 1px solid rgba(255, 255, 255, 0.2) !important;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
             transition: all 0.3s ease !important;
+            backdrop-filter: blur(8px) !important;
+            -webkit-backdrop-filter: blur(8px) !important;
         }
 
-        .overlay-glass button:hover {
+        .overlay-glass .control-btn:hover {
             background: rgba(255, 255, 255, 0.2) !important;
             transform: scale(1.05) !important;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        /* Progress bar for level */
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-green), var(--accent-blue));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* Power-up indicators */
+        .powerup-indicator {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin: 0 0.25rem;
+            font-weight: bold;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.1); /* More transparent */
+            backdrop-filter: blur(4px); /* Add blur effect */
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .powerup-speed { background: var(--accent-blue); }
+        .powerup-shield { background: var(--accent-purple); }
+        .powerup-slow { background: var(--accent-pink); }
+        .powerup-duplicate { background: var(--accent-amber); }
+
+        /* Game instructions */
+        .instructions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .instruction-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .instruction-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Mobile leaderboard toggle */
+        #mobile-leaderboard-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 30;
+            background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #mobile-leaderboard-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(16, 185, 129, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            #mobile-leaderboard-toggle {
+                display: block;
+            }
+        }
+
+        /* Animation for new features */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Custom scrollbar for leaderboard */
+        #leaderboard-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #leaderboard-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        #leaderboard-list::-webkit-scrollbar-thumb {
+            background: var(--primary-green);
+            border-radius: 3px;
+        }
+
+        #leaderboard-list::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-green);
         }
     </style>
 </head>
@@ -697,6 +941,11 @@ function handleGetLeaderboard($pdo)
 
     <!-- Leaderboard Toggle Button -->
     <button id="leaderboard-toggle">
+        📊
+    </button>
+
+    <!-- Mobile Leaderboard Toggle Button -->
+    <button id="mobile-leaderboard-toggle">
         📊
     </button>
 
@@ -732,11 +981,22 @@ function handleGetLeaderboard($pdo)
 
     <!-- Main Game UI -->
     <div class="w-full max-w-lg text-center mb-4 main-game-ui">
-        <h1 id="title" class="text-4xl font-game text-green-400 text-content">SNAKE</h1>
+        <h1 id="title" class="text-4xl font-game text-green-400 text-content">SNAKE EYES</h1>
         <p id="subtitle" class="text-gray-400 mt-2 text-content">Swipe anywhere to control the snake</p>
         <div class="mt-4 text-2xl font-game flex justify-center items-center gap-8 score-level">
             <div class="text-content"><span id="score-label">SCORE</span>: <span id="score" class="text-yellow-400">0</span></div>
             <div class="text-content"><span id="level-label">LEVEL</span>: <span id="level" class="text-cyan-400">1</span></div>
+        </div>
+        <!-- Progress bar for next level -->
+        <div class="progress-bar mt-2 mx-auto max-w-xs">
+            <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+        </div>
+        <!-- Power-up indicators with tooltips explaining each powerup -->
+        <div class="mt-2 flex justify-center">
+            <div class="powerup-indicator powerup-speed" title="Speed Boost: Makes the snake move faster for a short time">⚡</div>
+            <div class="powerup-indicator powerup-shield" title="Shield: Protects the snake from collisions for a short time">🛡️</div>
+            <div class="powerup-indicator powerup-slow" title="Slow Motion: Slows down the snake for better control">🐢</div>
+            <div class="powerup-indicator powerup-duplicate" title="Duplicate: Creates a copy of your snake that mirrors your movements">🪞</div>
         </div>
     </div>
 
@@ -745,18 +1005,18 @@ function handleGetLeaderboard($pdo)
         <!-- Name Entry Overlay -->
         <div id="name-entry-overlay"
             class="absolute inset-0 overlay-glass flex flex-col items-center justify-center rounded-lg text-center p-4 z-20">
-            <h2 id="name-entry-title" class="text-4xl font-game text-yellow-400 mb-6 text-content">ENTER YOUR NAME</h2>
+            <h2 id="name-entry-title" class="text-4xl font-game text-yellow-400 mb-4 text-content">ENTER YOUR NAME</h2>
             <input type="text" id="player-name-input"
                 class="input-field text-white text-xl p-4 rounded-lg mb-6 w-80 max-w-full text-center transition-all duration-200"
-                placeholder="Your Name" maxlength="20" autocomplete="off" spellcheck="false">
+                placeholder="Your Name" maxlength="20" autocomplete="off" spellcheck="false" inputmode="text">
             <div class="flex flex-col sm:flex-row gap-4">
                 <button id="confirm-name-button"
-                    class="text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform font-game text-lg disabled:opacity-50 disabled:hover:scale-100 text-content"
+                    class="control-btn primary text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform font-game text-lg disabled:opacity-50 disabled:hover:scale-100 text-content"
                     disabled>
                     CONTINUE
                 </button>
                 <button id="guest-button"
-                    class="text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform font-game text-lg text-content">
+                    class="control-btn secondary text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform font-game text-lg text-content">
                     PLAY AS GUEST
                 </button>
             </div>
@@ -764,11 +1024,27 @@ function handleGetLeaderboard($pdo)
 
         <div id="tutorial-overlay"
             class="absolute inset-0 overlay-glass flex flex-col items-center justify-center rounded-lg text-center p-4 z-10 hidden">
-            <h2 id="tutorial-title" class="text-4xl font-game text-yellow-400 mb-6 text-content">HOW TO PLAY</h2>
-            <p id="tutorial-text" class="text-xl text-gray-200 mb-8 text-content">Swipe anywhere on the screen to guide the snake.
-            </p>
+            <h2 id="tutorial-title" class="text-4xl font-game text-yellow-400 mb-4 text-content">HOW TO PLAY</h2>
+            <div class="instructions">
+                <div class="instruction-item">
+                    <div class="instruction-icon">📱</div>
+                    <p id="instruction-swipe" class="text-content">Swipe to move</p>
+                </div>
+                <div class="instruction-item">
+                    <div class="instruction-icon">🍎</div>
+                    <p id="instruction-eat" class="text-content">Eat food to grow</p>
+                </div>
+                <div class="instruction-item">
+                    <div class="instruction-icon">⚡</div>
+                    <p id="instruction-powerups" class="text-content">Collect power-ups for special abilities (Speed, Shield, Slow, Duplicate)</p>
+                </div>
+                <div class="instruction-item">
+                    <div class="instruction-icon">💀</div>
+                    <p id="instruction-avoid" class="text-content">Avoid walls and self</p>
+                </div>
+            </div>
             <button id="start-button"
-                class="text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform font-game text-lg text-content">
+                class="control-btn primary text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform font-game text-lg text-content mt-4">
                 START GAME
             </button>
             <div class="absolute bottom-4 text-gray-500 text-sm">
@@ -780,12 +1056,23 @@ function handleGetLeaderboard($pdo)
         <div id="game-over"
             class="absolute inset-0 overlay-glass flex-col items-center justify-center rounded-lg text-center hidden">
             <h2 id="game-over-title" class="text-5xl font-game text-red-500 text-content">GAME OVER</h2>
-            <p class="mt-4 text-xl text-gray-300 text-content"><span id="final-score-label">Your score</span>: <span id="final-score"
+            <p class="mt-4 text-xl text-gray-300 text-content"><span id="player-name-display" class="font-bold text-green-400"></span>, <span id="final-score-label">your score</span>: <span id="final-score"
                     class="font-bold text-yellow-300">0</span></p>
-            <button id="restart-button"
-                class="mt-6 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform font-game text-sm text-content">
-                RESTART
-            </button>
+            <p class="mt-2 text-lg text-gray-400 text-content">Would you like to post your score or try again?</p>
+            <div class="mt-6 flex gap-4">
+                <button id="post-score-button"
+                    class="control-btn primary text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform font-game text-sm text-content">
+                    POST SCORE
+                </button>
+                <button id="restart-button"
+                    class="control-btn primary text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform font-game text-sm text-content">
+                    PLAY AGAIN
+                </button>
+                <button id="menu-button"
+                    class="control-btn secondary text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform font-game text-sm text-content">
+                    MAIN MENU
+                </button>
+            </div>
         </div>
 
         <!-- Replay Overlay -->
@@ -795,16 +1082,24 @@ function handleGetLeaderboard($pdo)
             <p id="replay-info" class="text-lg text-gray-300 mb-4">Replaying game...</p>
             <div class="flex gap-4 mb-4">
                 <button id="replay-pause-button"
-                    class="text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform font-game text-sm">
+                    class="control-btn secondary text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform font-game text-sm">
                     PAUSE
                 </button>
                 <button id="replay-speed-button"
-                    class="text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform font-game text-sm">
+                    class="control-btn secondary text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform font-game text-sm">
                     SPEED: 1x
                 </button>
+                <button id="replay-restart-button"
+                    class="control-btn secondary text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform font-game text-sm">
+                    RESTART
+                </button>
+            </div>
+            <div class="w-full max-w-md flex items-center gap-3 mb-4">
+                <span id="replay-time" class="text-sm text-gray-300 whitespace-nowrap">00:00 / 00:00</span>
+                <input id="replay-seek" type="range" min="0" max="100" value="0" class="w-full" />
             </div>
             <button id="replay-exit-button"
-                class="text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform font-game text-sm">
+                class="control-btn primary text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-transform transform font-game text-sm">
                 EXIT REPLAY
             </button>
         </div>
@@ -814,19 +1109,24 @@ function handleGetLeaderboard($pdo)
         // --- LANGUAGE & UI TEXT ---
         const translations = {
             en: {
-                title: 'SNAKE',
+                title: 'SNAKE EYES',
                 subtitle: 'Swipe anywhere to control the snake',
                 scoreLabel: 'SCORE',
                 levelLabel: 'LEVEL',
                 gameOverTitle: 'GAME OVER',
                 finalScoreLabel: 'Your score',
-                restartButton: 'RESTART',
+                restartButton: 'PLAY AGAIN',
+                menuButton: 'MAIN MENU',
+                postScoreButton: 'POST SCORE',
                 langToggle: 'عربي',
                 tutorialTitle: 'HOW TO PLAY',
-                tutorialText: 'Swipe anywhere on the screen to guide the snake.',
+                instructionSwipe: 'Swipe to move',
+                instructionEat: 'Eat food to grow',
+                instructionPowerups: 'Collect power-ups for special abilities',
+                instructionAvoid: 'Avoid walls and self',
                 startButton: 'START GAME',
-                credits: 'Created by Gemini',
-                copyright: '&copy; 2024. All Rights Reserved.',
+                credits: 'Created by HASAN ALDOY @aldoyh',
+                copyright: '&copy; <?php echo date("Y"); ?>. All Rights Reserved.',
                 leaderboardTitle: 'LEADERBOARD',
                 nameEntryTitle: 'ENTER YOUR NAME',
                 playerNamePlaceholder: 'Your Name',
@@ -840,19 +1140,24 @@ function handleGetLeaderboard($pdo)
                 watchReplayButton: 'WATCH REPLAY'
             },
             ar: {
-                title: 'الثعبان',
+                title: 'عيون الثعبان',
                 subtitle: 'اسحب في أي مكان للتحكم في الثعبان',
                 scoreLabel: 'النتيجة',
                 levelLabel: 'المستوى',
                 gameOverTitle: 'انتهت اللعبة',
                 finalScoreLabel: 'نتيجتك',
-                restartButton: 'إعادة البدء',
+                restartButton: 'اللعب مجددًا',
+                menuButton: 'القائمة الرئيسية',
+                postScoreButton: 'نشر النتيجة',
                 langToggle: 'English',
                 tutorialTitle: 'كيفية اللعب',
-                tutorialText: 'اسحب في أي مكان على الشاشة لتوجيه الثعبان.',
+                instructionSwipe: 'اسحب للتحرك',
+                instructionEat: 'كل الطعام للنمو',
+                instructionPowerups: 'اجمع الطاقات للحصول على قدرات خاصة (السرعة، الدرع، البطء، التكرار)',
+                instructionAvoid: 'تجنب الجدران والذات',
                 startButton: 'ابدأ اللعبة',
-                credits: 'برمجة بواسطة Gemini',
-                copyright: '&copy; 2024. جميع الحقوق محفوظة.',
+                credits: 'صنع بواسطة حسن الدوي @aldoyh',
+                copyright: '&copy; <?php echo date("Y"); ?>. جميع الحقوق محفوظة.',
                 leaderboardTitle: 'المتصدرون',
                 nameEntryTitle: 'ادخل اسمك',
                 playerNamePlaceholder: 'اسمك',
@@ -882,9 +1187,14 @@ function handleGetLeaderboard($pdo)
             document.getElementById('game-over-title').textContent = t.gameOverTitle;
             document.getElementById('final-score-label').innerHTML = t.finalScoreLabel;
             document.getElementById('restart-button').textContent = t.restartButton;
+            document.getElementById('menu-button').textContent = t.menuButton;
+            document.getElementById('post-score-button').textContent = t.postScoreButton;
             document.getElementById('lang-toggle').textContent = t.langToggle;
             document.getElementById('tutorial-title').textContent = t.tutorialTitle;
-            document.getElementById('tutorial-text').textContent = t.tutorialText;
+            document.getElementById('instruction-swipe').textContent = t.instructionSwipe;
+            document.getElementById('instruction-eat').textContent = t.instructionEat;
+            document.getElementById('instruction-powerups').textContent = t.instructionPowerups;
+            document.getElementById('instruction-avoid').textContent = t.instructionAvoid;
             document.getElementById('start-button').textContent = t.startButton;
             document.getElementById('credits').textContent = t.credits;
             document.getElementById('copyright').innerHTML = t.copyright;
@@ -910,8 +1220,9 @@ function handleGetLeaderboard($pdo)
 
         // --- GAME LOGIC (p5.js) ---
         const sketch = (p) => {
-            let boxSize = 20,
-                cols, rows, snake, food;
+            // Grid cell size in pixels
+            let boxSize = 20;
+            let cols, rows, snake, food, powerUps = [];
             let score = 0,
                 level = 1,
                 direction = 'right';
@@ -925,6 +1236,16 @@ function handleGetLeaderboard($pdo)
             let gameMoves = [];
             let gameStartTime = 0;
             let particles = [];
+            let obstacles = [];
+            let duplicateSnake = null; // New variable for duplicate snake
+
+            // Power-up system
+            let activePowerUps = {
+                speed: { active: false, timer: 0 },
+                shield: { active: false, timer: 0 },
+                slow: { active: false, timer: 0 },
+                duplicate: { active: false, timer: 0 }
+            };
 
             // Replay variables
             let isReplayMode = false;
@@ -935,13 +1256,18 @@ function handleGetLeaderboard($pdo)
             let replaySnake = null;
             let replayStartTime = null;
             let replayInitialTimestamp = null;
+            let replayTotalDuration = 0;
+            let replayKeydownHandler = null;
 
             // DOM Elements
             const scoreEl = document.getElementById('score');
             const levelEl = document.getElementById('level');
             const finalScoreEl = document.getElementById('final-score');
+            const playerNameDisplay = document.getElementById('player-name-display');
             const gameOverEl = document.getElementById('game-over');
             const restartButton = document.getElementById('restart-button');
+            const menuButton = document.getElementById('menu-button');
+            const postScoreButton = document.getElementById('post-score-button');
             const tutorialOverlay = document.getElementById('tutorial-overlay');
             const startButton = document.getElementById('start-button');
             const langToggleButton = document.getElementById('lang-toggle');
@@ -953,10 +1279,15 @@ function handleGetLeaderboard($pdo)
             const replayOverlay = document.getElementById('replay-overlay');
             const replayPauseButton = document.getElementById('replay-pause-button');
             const replaySpeedButton = document.getElementById('replay-speed-button');
+            const replayRestartButton = document.getElementById('replay-restart-button');
             const replayExitButton = document.getElementById('replay-exit-button');
             const replayInfoEl = document.getElementById('replay-info');
+            const replaySeek = document.getElementById('replay-seek');
+            const replayTime = document.getElementById('replay-time');
             const leaderboardContainer = document.getElementById('leaderboard-container');
             const leaderboardToggle = document.getElementById('leaderboard-toggle');
+            const mobileLeaderboardToggle = document.getElementById('mobile-leaderboard-toggle');
+            const progressFill = document.getElementById('progress-fill');
             
             // Audio elements
             const introSplashSound = document.getElementById('intro-splash-sound');
@@ -977,6 +1308,20 @@ function handleGetLeaderboard($pdo)
                 // Add click listener if not already added
                 leaderboardToggle.removeEventListener('click', toggleLeaderboard);
                 leaderboardToggle.addEventListener('click', toggleLeaderboard);
+                
+                // Mobile toggle
+                mobileLeaderboardToggle.removeEventListener('click', toggleLeaderboard);
+                mobileLeaderboardToggle.addEventListener('click', toggleLeaderboard);
+            }
+
+            // Helper: check if any blocking overlay is visible or input is focused
+            function isUIBlockingActive() {
+                const isNameVisible = nameEntryOverlay && getComputedStyle(nameEntryOverlay).display !== 'none';
+                const isTutorialVisible = tutorialOverlay && getComputedStyle(tutorialOverlay).display !== 'none';
+                const isReplayVisible = replayOverlay && getComputedStyle(replayOverlay).display !== 'none';
+                const isGameOverVisible = gameOverEl && getComputedStyle(gameOverEl).display !== 'none';
+                const isInputFocused = document.activeElement === playerNameInput;
+                return isNameVisible || isTutorialVisible || isReplayVisible || isGameOverVisible || isInputFocused;
             }
 
             function toggleLeaderboard() {
@@ -1027,18 +1372,29 @@ function handleGetLeaderboard($pdo)
                 cols = p.floor(p.width / boxSize);
                 rows = p.floor(p.height / boxSize);
 
+                // Make sure input field is enabled
+                playerNameInput.disabled = false;
+                playerNameInput.readOnly = false;
+
                 // Event listeners
                 restartButton.addEventListener('click', resetGame);
+                menuButton.addEventListener('click', returnToMenu);
                 startButton.addEventListener('click', startGame);
                 confirmNameButton.addEventListener('click', proceedToTutorial);
                 guestButton.addEventListener('click', playAsGuest);
+                
+                // Prevent multiple clicks on post score button
+                postScoreButton.addEventListener('click', function() {
+                    this.disabled = true;
+                    postScore();
+                });
 
                 // Multiple input event listeners for better compatibility
                 playerNameInput.addEventListener('input', validateNameInput);
                 playerNameInput.addEventListener('keyup', validateNameInput);
                 playerNameInput.addEventListener('change', validateNameInput);
-                playerNameInput.addEventListener('paste', () => {
-                    setTimeout(validateNameInput, 10); // Delay to allow paste to complete
+                playerNameInput.addEventListener('paste', (e) => {
+                    setTimeout(() => validateNameInput(e), 10); // Delay to allow paste to complete
                 });
 
                 playerNameInput.addEventListener('keypress', (e) => {
@@ -1049,9 +1405,20 @@ function handleGetLeaderboard($pdo)
 
                 // Add click event to the name entry overlay to focus input
                 nameEntryOverlay.addEventListener('click', (e) => {
-                    if (e.target === nameEntryOverlay) {
+                    console.log('Overlay clicked, focusing input');
+                    if (e.target === nameEntryOverlay || e.target === playerNameInput) {
                         playerNameInput.focus();
                     }
+                });
+                
+                // Also add a focus event listener to the input to ensure it works
+                playerNameInput.addEventListener('focus', (e) => {
+                    console.log('Input focused');
+                });
+                
+                // Add blur event listener to see if focus is lost
+                playerNameInput.addEventListener('blur', (e) => {
+                    console.log('Input blurred');
                 });
 
                 langToggleButton.addEventListener('click', () => setLanguage(currentLang === 'en' ? 'ar' : 'en'));
@@ -1059,7 +1426,13 @@ function handleGetLeaderboard($pdo)
                 // Replay controls
                 replayPauseButton.addEventListener('click', toggleReplayPause);
                 replaySpeedButton.addEventListener('click', cycleReplaySpeed);
+                if (replayRestartButton) replayRestartButton.addEventListener('click', restartReplay);
                 replayExitButton.addEventListener('click', exitReplay);
+                const onSeekInput = (e) => {
+                    const percent = parseInt(e.target.value, 10) || 0;
+                    seekReplay(percent);
+                };
+                if (replaySeek) replaySeek.addEventListener('input', onSeekInput);
 
                 // Setup mobile leaderboard
                 setupMobileLeaderboard();
@@ -1085,7 +1458,7 @@ function handleGetLeaderboard($pdo)
             };
 
             p.draw = () => {
-                // Clear canvas for transparency now that backdrop blur is removed
+                // Clear canvas to show the blurred background
                 p.clear();
                 if (isReplayMode) {
                     handleReplayMode();
@@ -1094,9 +1467,35 @@ function handleGetLeaderboard($pdo)
                     if (!isGameOver) {
                         snake.update();
                         snake.checkCollision();
+                        // Update duplicate snake if active
+                        if (duplicateSnake) {
+                            // Mirror the movement of the original snake
+                            duplicateSnake.xdir = snake.xdir;
+                            duplicateSnake.ydir = snake.ydir;
+                            duplicateSnake.update();
+                            // Check collision for duplicate snake (but don't trigger game over)
+                            duplicateSnake.checkCollisionNoGameOver();
+                        }
                     }
                     snake.show();
+                    // Show duplicate snake if active
+                    if (duplicateSnake) {
+                        duplicateSnake.show(true); // Pass true to indicate it's a duplicate
+                    }
                 }
+                
+                // Draw obstacles
+                for (let obs of obstacles) {
+                    p.fill(100, 100, 150);
+                    p.noStroke();
+                    p.rect(obs.x, obs.y, boxSize, boxSize, 6);
+                }
+                
+                // Draw power-ups
+                for (let i = powerUps.length - 1; i >= 0; i--) {
+                    powerUps[i].show();
+                }
+                
                 if (food) {
                     p.fill(255, 82, 82);
                     p.noStroke();
@@ -1136,24 +1535,105 @@ function handleGetLeaderboard($pdo)
                         snap: { innerHTML: 1 },
                         ease: "power2.out"
                     });
+                    updateProgress();
                     checkRankAndConfetti();
                     if (score > 0 && score % 5 === 0) {
                         level++;
-                        levelEl.textContent = level;
+                        // Animate level with GSAP
+                        gsap.to(levelEl, {
+                            duration: 0.5,
+                            innerHTML: level,
+                            snap: { innerHTML: 1 },
+                            ease: "power2.out"
+                        });
                         p.frameRate(10 + level * 2);
+                        // Add obstacle every 2 levels
+                        if (level % 2 === 0) {
+                            addObstacle();
+                        }
+                        // Add power-up every 3 levels
+                        if (level % 3 === 0) {
+                            addPowerUp();
+                        }
                     }
                 }
+                
+                // Check for power-up collection
+                if (!isReplayMode && snake) {
+                    for (let i = powerUps.length - 1; i >= 0; i--) {
+                        if (snake.eat(powerUps[i].pos)) {
+                            activatePowerUp(powerUps[i].type);
+                            powerUps.splice(i, 1);
+                            // Play special sound for powerup collection
+                            if (foodSound) {
+                                foodSound.currentTime = 0;
+                                foodSound.play().catch(e => {});
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                // Check if duplicate snake eats food
+                if (!isReplayMode && duplicateSnake) {
+                    if (duplicateSnake.eat(food)) {
+                        // If duplicate snake eats food, grow the original snake too
+                        snake.grow();
+                        createParticles(food.x, food.y);
+                        placeFood();
+                        // Play snake eat sound
+                        if (snakeEatSound) {
+                            snakeEatSound.currentTime = 0;
+                            snakeEatSound.play().catch(e => {});
+                        }
+                        // Play food sound
+                        if (foodSound) {
+                            foodSound.currentTime = 0;
+                            foodSound.play().catch(e => {});
+                        }
+                        score++;
+                        // Animate score with GSAP
+                        gsap.to(scoreEl, {
+                            duration: 0.5,
+                            innerHTML: score,
+                            snap: { innerHTML: 1 },
+                            ease: "power2.out"
+                        });
+                        updateProgress();
+                        checkRankAndConfetti();
+                        if (score > 0 && score % 5 === 0) {
+                            level++;
+                            levelEl.textContent = level;
+                            p.frameRate(10 + level * 2);
+                            // Add obstacle every 2 levels
+                            if (level % 2 === 0) {
+                                addObstacle();
+                            }
+                            // Add power-up every 3 levels
+                            if (level % 3 === 0) {
+                                addPowerUp();
+                            }
+                        }
+                    }
+                }
+                
+                // Update power-up timers
+                updatePowerUps();
             };
 
             p.touchStarted = () => {
+                // Don't block default when overlays are visible or input is focused
+                if (isUIBlockingActive()) return;
                 if (!isGameOver && !isReplayMode) {
                     touchStartX = p.mouseX;
                     touchStartY = p.mouseY;
+                    return false; // prevent scrolling only when we handle the gesture
                 }
-                return false;
             }
 
             p.touchEnded = () => {
+                // Allow default when overlays are visible (e.g., focusing inputs)
+                if (isUIBlockingActive()) return;
                 if (!isGameOver && !isReplayMode) {
                     const dx = p.mouseX - touchStartX;
                     const dy = p.mouseY - touchStartY;
@@ -1178,11 +1658,13 @@ function handleGetLeaderboard($pdo)
                         snake.setDir(direction);
                         logMove(direction);
                     }
+                    return false; // only prevent default when we process a swipe
                 }
-                return false;
             }
 
             p.keyPressed = () => {
+                // If typing in an input or overlays visible, don't handle arrows
+                if (isUIBlockingActive()) return;
                 if (!isReplayMode) {
                     let newDirection = direction;
 
@@ -1207,9 +1689,16 @@ function handleGetLeaderboard($pdo)
             // --- NEW FUNCTIONS FOR ENHANCED FEATURES ---
 
             function setupNameEntry() {
+                console.log('Setting up name entry');
+                
                 // Clear any previous input
                 playerNameInput.value = '';
                 confirmNameButton.disabled = true;
+
+                // Make sure input is enabled
+                playerNameInput.disabled = false;
+                playerNameInput.readOnly = false;
+                playerNameInput.tabIndex = 0; // Ensure it's focusable
 
                 // Hide leaderboard on mobile during name entry
                 setLeaderboardVisibility(false);
@@ -1220,37 +1709,66 @@ function handleGetLeaderboard($pdo)
                     introSplashSound.play().catch(e => console.log("Sound play prevented by browser:", e));
                 }
 
-                // Focus the input field after a short delay to ensure it's visible
-                setTimeout(() => {
-                    playerNameInput.focus();
-                }, 100);
-
-                gsap.to("#name-entry-overlay", {
-                    duration: 0.8,
-                    opacity: 0.95,
-                    repeat: -1,
-                    yoyo: true,
-                    ease: "power1.inOut"
+                // Ensure the overlay is visible first
+                nameEntryOverlay.style.display = 'flex';
+                
+                // Remove any existing GSAP animations on the overlay
+                gsap.killTweensOf("#name-entry-overlay");
+                gsap.killTweensOf(nameEntryOverlay);
+                
+                // Use GSAP timeline for entrance animation
+                const tl = createPanelEntranceTimeline(nameEntryOverlay);
+                tl.eventCallback("onStart", () => {
+                    console.log('Animation started, setting focus');
+                    // Focus the input field after a short delay to ensure it's visible
+                    setTimeout(() => {
+                        console.log('Attempting to focus input');
+                        // Check if the input is visible before focusing
+                        const rect = playerNameInput.getBoundingClientRect();
+                        const isVisible = rect.top >= 0 && rect.left >= 0 && 
+                                         rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && 
+                                         rect.right <= (window.innerWidth || document.documentElement.clientWidth);
+                        
+                        console.log('Input visibility:', isVisible, 'Rect:', rect);
+                        
+                        playerNameInput.focus();
+                        playerNameInput.select(); // Select any existing text
+                        console.log('Input focused:', document.activeElement === playerNameInput);
+                        
+                        // Try again after a longer delay to ensure it works
+                        setTimeout(() => {
+                            if (document.activeElement !== playerNameInput) {
+                                console.log('Re-attempting focus');
+                                playerNameInput.focus();
+                                playerNameInput.select();
+                                console.log('Input focused after re-attempt:', document.activeElement === playerNameInput);
+                            }
+                        }, 200);
+                    }, 100);
                 });
+                tl.play();
             }
 
-            function validateNameInput() {
+            function validateNameInput(e) {
+                console.log('Input event triggered:', e?.type);
                 const name = playerNameInput.value.trim();
                 const isValid = name.length >= 2;
                 confirmNameButton.disabled = !isValid;
+                
+                console.log('Name:', name, 'Valid:', isValid, 'Button disabled:', confirmNameButton.disabled);
 
                 // Visual feedback
                 if (name.length > 0) {
                     if (isValid) {
                         playerNameInput.style.borderColor = '#10b981'; // green
-                        playerNameInput.style.backgroundColor = '#374151'; // lighter gray
+                        playerNameInput.style.backgroundColor = 'rgba(16, 185, 129, 0.1)'; // lighter green
                     } else {
                         playerNameInput.style.borderColor = '#f59e0b'; // yellow/orange
-                        playerNameInput.style.backgroundColor = '#1f2937'; // darker gray
+                        playerNameInput.style.backgroundColor = 'rgba(245, 158, 11, 0.1)'; // darker yellow
                     }
                 } else {
-                    playerNameInput.style.borderColor = '#4b5563'; // default gray
-                    playerNameInput.style.backgroundColor = '#1f2937'; // default dark gray
+                    playerNameInput.style.borderColor = 'rgba(255, 255, 255, 0.2)'; // default
+                    playerNameInput.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'; // default
                 }
 
                 console.log('Name validation:', {
@@ -1263,15 +1781,15 @@ function handleGetLeaderboard($pdo)
             function playAsGuest() {
                 playerName = generateRandomName();
                 gsap.killTweensOf("#name-entry-overlay");
-                gsap.to(nameEntryOverlay, {
-                    opacity: 0,
-                    duration: 0.5,
-                    onComplete: () => {
-                        nameEntryOverlay.style.display = 'none';
-                        tutorialOverlay.style.display = 'flex';
-                        setupTutorial();
-                    }
+                
+                // Use GSAP timeline for exit animation
+                const exitTl = createPanelExitTimeline(nameEntryOverlay);
+                exitTl.eventCallback("onComplete", () => {
+                    nameEntryOverlay.style.display = 'none';
+                    tutorialOverlay.style.display = 'flex';
+                    setupTutorial();
                 });
+                exitTl.play();
             }
 
             function proceedToTutorial() {
@@ -1279,15 +1797,15 @@ function handleGetLeaderboard($pdo)
                 if (playerName.length < 2) return;
 
                 gsap.killTweensOf("#name-entry-overlay");
-                gsap.to(nameEntryOverlay, {
-                    opacity: 0,
-                    duration: 0.5,
-                    onComplete: () => {
-                        nameEntryOverlay.style.display = 'none';
-                        tutorialOverlay.style.display = 'flex';
-                        setupTutorial();
-                    }
+                
+                // Use GSAP timeline for exit animation
+                const exitTl = createPanelExitTimeline(nameEntryOverlay);
+                exitTl.eventCallback("onComplete", () => {
+                    nameEntryOverlay.style.display = 'none';
+                    tutorialOverlay.style.display = 'flex';
+                    setupTutorial();
                 });
+                exitTl.play();
             }
 
             function logMove(newDirection) {
@@ -1371,7 +1889,10 @@ function handleGetLeaderboard($pdo)
 
                     // Hide game UI and show replay UI
                     replayOverlay.style.display = 'flex';
+                    const totalMs = (replayData.moves[replayData.moves.length - 1].timestamp_ms - replayData.moves[0].timestamp_ms) || 0;
+                    replayTotalDuration = Math.max(0, totalMs);
                     replayInfoEl.textContent = `Replaying ${replayData.game.player_name}'s game (Score: ${replayData.game.score})`;
+                    if (replayTime) replayTime.textContent = '00:00 / ' + msToMMSS(replayTotalDuration);
 
                     // Initialize replay snake with correct position and length
                     if (replayData.moves && replayData.moves.length > 0) {
@@ -1396,7 +1917,29 @@ function handleGetLeaderboard($pdo)
                     }
 
                     p.loop();
-                    p.frameRate(10 * replaySpeed);
+                    p.frameRate(30); // smooth draw; timing via timestamps
+
+                    // Keyboard shortcuts for replay controls
+                    replayKeydownHandler = (ev) => {
+                        if (!isReplayMode) return;
+                        if (ev.key === ' ') { // Space to pause/resume
+                            ev.preventDefault();
+                            toggleReplayPause();
+                        } else if (ev.key.toLowerCase() === 's') { // S to change speed
+                            ev.preventDefault();
+                            cycleReplaySpeed();
+                        } else if (ev.key === 'Escape') { // Esc to exit
+                            ev.preventDefault();
+                            exitReplay();
+                        } else if (ev.key === 'ArrowLeft') { // Step back
+                            ev.preventDefault();
+                            stepReplay(-1);
+                        } else if (ev.key === 'ArrowRight') { // Step forward
+                            ev.preventDefault();
+                            stepReplay(1);
+                        }
+                    };
+                    document.addEventListener('keydown', replayKeydownHandler);
                 } catch (error) {
                     console.error('Failed to start replay:', error);
                     alert('Failed to load replay data: ' + error.message);
@@ -1439,6 +1982,12 @@ function handleGetLeaderboard($pdo)
                         }
                         
                         replayMoveIndex++;
+                        // Update progress/time UI
+                        const lastIdx = replayData.moves.length - 1;
+                        const pct = Math.round((replayMoveIndex - 1) / Math.max(1, lastIdx) * 100);
+                        if (replaySeek) replaySeek.value = String(pct);
+                        const curMs = currentMove.timestamp_ms - replayInitialTimestamp;
+                        updateReplayTime(curMs, replayTotalDuration);
                         
                         // Check if replay is complete after processing the move
                         if (replayMoveIndex >= replayData.moves.length) {
@@ -1453,6 +2002,97 @@ function handleGetLeaderboard($pdo)
                 }
             }
 
+            function msToMMSS(ms) {
+                const totalSec = Math.max(0, Math.floor(ms / 1000));
+                const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+                const s = (totalSec % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            }
+
+            function updateReplayTime(currentMs, totalMs) {
+                if (replayTime) {
+                    replayTime.textContent = `${msToMMSS(currentMs)} / ${msToMMSS(totalMs)}`;
+                }
+            }
+
+        function rebuildReplaySnakeToIndex(targetIndex) {
+                replaySnake = new Snake();
+                replaySnake.body = [p.createVector(
+                    Math.floor(cols / 2) * boxSize,
+                    Math.floor(rows / 2) * boxSize
+                )];
+                replaySnake.xdir = 1;
+                replaySnake.ydir = 0;
+                for (let i = 0; i <= targetIndex; i++) {
+                    const mv = replayData.moves[i];
+                    replaySnake.setDir(mv.direction);
+                    replaySnake.update();
+                    while (replaySnake.body.length < mv.snake_length) {
+                        replaySnake.grow();
+                    }
+            if (!food) food = p.createVector(0, 0);
+            food.x = mv.food_x * boxSize;
+            food.y = mv.food_y * boxSize;
+                }
+            }
+
+            function seekReplay(percent) {
+                if (!replayData || replayData.moves.length === 0) return;
+                const pct = Math.max(0, Math.min(100, percent));
+                const lastIdx = replayData.moves.length - 1;
+                const targetIndex = Math.round((pct / 100) * lastIdx);
+                // Build state up to targetIndex, then set next move to targetIndex + 1
+                replayMoveIndex = Math.min(targetIndex + 1, lastIdx);
+                rebuildReplaySnakeToIndex(replayMoveIndex);
+                // Reset timing baselines so next move triggers from now
+                replayInitialTimestamp = replayData.moves[replayMoveIndex]?.timestamp_ms ?? replayData.moves[0].timestamp_ms;
+                replayStartTime = Date.now();
+                replayPaused = false;
+                const curIdx = Math.max(0, replayMoveIndex - 1);
+                updateReplayTime(replayData.moves[curIdx].timestamp_ms - replayData.moves[0].timestamp_ms, replayTotalDuration);
+            }
+
+            function stepReplay(delta) {
+                if (!replayData) return;
+                replayPaused = true;
+                const lastIdx = replayData.moves.length - 1;
+                let next = replayMoveIndex + delta;
+                if (next < 0) next = 0;
+                if (next > lastIdx) next = lastIdx;
+                replayMoveIndex = next;
+                const pct = Math.round((replayMoveIndex) / Math.max(1, lastIdx) * 100);
+                if (replaySeek) replaySeek.value = String(pct);
+                rebuildReplaySnakeToIndex(replayMoveIndex);
+                // Align timing to current index so resuming is consistent
+                replayInitialTimestamp = replayData.moves[replayMoveIndex]?.timestamp_ms ?? replayData.moves[0].timestamp_ms;
+                replayStartTime = Date.now();
+                updateReplayTime(replayData.moves[replayMoveIndex].timestamp_ms - replayData.moves[0].timestamp_ms, replayTotalDuration);
+            }
+
+            function restartReplay() {
+                if (!replayData) return;
+                replayPaused = false;
+                replaySpeed = 1;
+                replaySpeedButton.textContent = `${translations[currentLang].speedButton}: 1x`;
+                replayMoveIndex = 0;
+                replayInitialTimestamp = replayData.moves[0].timestamp_ms;
+                replayStartTime = Date.now();
+                if (replaySeek) replaySeek.value = '0';
+                updateReplayTime(0, replayTotalDuration);
+                replaySnake = new Snake();
+                replaySnake.body = [p.createVector(
+                    Math.floor(cols / 2) * boxSize,
+                    Math.floor(rows / 2) * boxSize
+                )];
+                replaySnake.xdir = 1;
+                replaySnake.ydir = 0;
+                const firstMove = replayData.moves[0];
+                while (replaySnake.body.length < firstMove.snake_length) replaySnake.grow();
+                food = p.createVector(firstMove.food_x * boxSize, firstMove.food_y * boxSize);
+                food.scale = 1;
+                replayInfoEl.textContent = `Replaying ${replayData.game.player_name}'s game (Score: ${replayData.game.score})`;
+            }
+
             function toggleReplayPause() {
                 replayPaused = !replayPaused;
                 const t = translations[currentLang];
@@ -1465,7 +2105,7 @@ function handleGetLeaderboard($pdo)
                 replaySpeed = speeds[(currentIndex + 1) % speeds.length];
                 replaySpeedButton.textContent = `${translations[currentLang].speedButton}: ${replaySpeed}x`;
                 // Update frame rate but ensure it's at least 1
-                p.frameRate(Math.max(1, 10 * replaySpeed));
+                // Speed affects logical catch-up, not draw rate
             }
 
             function exitReplay() {
@@ -1477,39 +2117,61 @@ function handleGetLeaderboard($pdo)
                 replaySpeed = 1;
                 replayStartTime = null;
                 replayInitialTimestamp = null;
-                replayOverlay.style.display = 'none';
+                replayTotalDuration = 0;
+                if (replayKeydownHandler) {
+                    document.removeEventListener('keydown', replayKeydownHandler);
+                    replayKeydownHandler = null;
+                }
                 
-                // Reset game state
-                isGameOver = false;
-                score = 0;
-                level = 1;
-                
-                // Re-initialize the game
-                snake = new Snake();
-                placeFood();
-                
-                // Reset UI
-                scoreEl.textContent = score;
-                levelEl.textContent = level;
-                
-                // Restart the game loop
-                p.frameRate(10);
-                p.loop();
+                // Use GSAP timeline for exit animation
+                const exitTl = createPanelExitTimeline(replayOverlay);
+                exitTl.eventCallback("onComplete", () => {
+                    replayOverlay.style.display = 'none';
+                    
+                    // Reset game state
+                    isGameOver = false;
+                    score = 0;
+                    level = 1;
+                    
+                    // Re-initialize the game
+                    snake = new Snake();
+                    placeFood();
+                    powerUps = [];
+                    obstacles = [];
+                    
+                    // Reset UI
+                    gsap.to(scoreEl, {
+                        duration: 0.5,
+                        innerHTML: score,
+                        snap: { innerHTML: 1 },
+                        ease: "power2.out"
+                    });
+                    gsap.to(levelEl, {
+                        duration: 0.5,
+                        innerHTML: level,
+                        snap: { innerHTML: 1 },
+                        ease: "power2.out"
+                    });
+                    updateProgress();
+                    
+                    // Restart the game loop
+                    p.frameRate(10);
+                    p.loop();
 
-                // Return to name entry
-                nameEntryOverlay.style.display = 'flex';
-                setupNameEntry();
+                    // Return to name entry
+                    nameEntryOverlay.style.display = 'flex';
+                    setupNameEntry();
+                });
+                exitTl.play();
             }
 
             function setupTutorial() {
                 setLeaderboardVisibility(false);
-                gsap.to("#tutorial-overlay", {
-                    duration: 0.8,
-                    opacity: 0.9,
-                    repeat: -1,
-                    yoyo: true,
-                    ease: "power1.inOut"
-                });
+                
+                // Use GSAP timeline for entrance animation
+                tutorialOverlay.style.display = 'flex';
+                const tl = createPanelEntranceTimeline(tutorialOverlay);
+                tl.play();
             }
 
             function startGame() {
@@ -1521,14 +2183,13 @@ function handleGetLeaderboard($pdo)
                     introSplashSound.play().catch(e => console.log("Sound play prevented by browser:", e));
                 }
                 
-                gsap.to(tutorialOverlay, {
-                    opacity: 0,
-                    duration: 0.5,
-                    onComplete: () => {
-                        tutorialOverlay.style.display = 'none';
-                        initializeNewGame();
-                    }
+                // Use GSAP timeline for exit animation
+                const exitTl = createPanelExitTimeline(tutorialOverlay);
+                exitTl.eventCallback("onComplete", () => {
+                    tutorialOverlay.style.display = 'none';
+                    initializeNewGame();
                 });
+                exitTl.play();
             }
 
             function initializeNewGame() {
@@ -1537,6 +2198,8 @@ function handleGetLeaderboard($pdo)
                 gameStartTime = Date.now();
                 moveSequence = 0;
                 gameMoves = [];
+                powerUps = [];
+                obstacles = [];
                 // Make sure we have a player name, generate one if needed
                 if (!playerName) {
                     playerName = generateRandomName();
@@ -1547,7 +2210,7 @@ function handleGetLeaderboard($pdo)
             function placeFood() {
                 let newFoodPos = p.createVector(p.floor(p.random(cols)), p.floor(p.random(rows)));
                 newFoodPos.mult(boxSize);
-                while (snake.isOnSnake(newFoodPos)) {
+                while (snake.isOnSnake(newFoodPos) || isPositionOccupied(newFoodPos)) {
                     newFoodPos = p.createVector(p.floor(p.random(cols)), p.floor(p.random(rows)));
                     newFoodPos.mult(boxSize);
                 }
@@ -1559,11 +2222,308 @@ function handleGetLeaderboard($pdo)
                     ease: "elastic.out(1, 0.5)"
                 });
             }
+            
+            function addPowerUp() {
+                // Only add if less than 2 power-ups on screen
+                if (powerUps.length >= 2) return;
+                
+                let newPowerUpPos = p.createVector(p.floor(p.random(cols)), p.floor(p.random(rows)));
+                newPowerUpPos.mult(boxSize);
+                
+                // Make sure position is not occupied
+                while (snake.isOnSnake(newPowerUpPos) || 
+                       (food && newPowerUpPos.x === food.x && newPowerUpPos.y === food.y) ||
+                       isPositionOccupied(newPowerUpPos)) {
+                    newPowerUpPos = p.createVector(p.floor(p.random(cols)), p.floor(p.random(rows)));
+                    newPowerUpPos.mult(boxSize);
+                }
+                
+                // Random power-up type
+                const types = ['speed', 'shield', 'slow', 'duplicate'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                
+                powerUps.push({
+                    pos: newPowerUpPos,
+                    type: type,
+                    show: function() {
+                        p.push();
+                        p.translate(this.pos.x + boxSize/2, this.pos.y + boxSize/2);
+                        
+                        // Draw different shapes based on type
+                        switch(this.type) {
+                            case 'speed':
+                                p.fill(59, 130, 246); // Blue
+                                p.rotate(p.frameCount * 0.05);
+                                p.triangle(0, -8, -7, 6, 7, 6);
+                                break;
+                            case 'shield':
+                                p.fill(139, 92, 246); // Purple
+                                p.ellipse(0, 0, boxSize * 0.8);
+                                p.fill(255);
+                                p.textSize(12);
+                                p.textAlign(p.CENTER, p.CENTER);
+                                p.text('🛡', 0, 0);
+                                break;
+                            case 'slow':
+                                p.fill(236, 72, 153); // Pink
+                                p.rectMode(p.CENTER);
+                                p.rect(0, 0, boxSize * 0.7, boxSize * 0.7, 4);
+                                p.fill(255);
+                                p.textSize(12);
+                                p.textAlign(p.CENTER, p.CENTER);
+                                p.text('🐢', 0, 0);
+                                break;
+                            case 'duplicate':
+                                p.fill(245, 158, 11); // Amber
+                                p.rectMode(p.CENTER);
+                                p.push();
+                                p.translate(-4, 0);
+                                p.rect(0, 0, boxSize * 0.4, boxSize * 0.4, 2);
+                                p.pop();
+                                p.push();
+                                p.translate(4, 0);
+                                p.rect(0, 0, boxSize * 0.4, boxSize * 0.4, 2);
+                                p.pop();
+                                break;
+                        }
+                        
+                        p.pop();
+                    }
+                });
+            }
+            
+            function showPowerUpNotification(text, color) {
+                // Create a temporary notification element
+                const notification = document.createElement('div');
+                notification.textContent = text;
+                notification.style.position = 'absolute';
+                notification.style.top = '50%';
+                notification.style.left = '50%';
+                notification.style.transform = 'translate(-50%, -50%)';
+                notification.style.color = color;
+                notification.style.fontSize = '24px';
+                notification.style.fontWeight = 'bold';
+                notification.style.textShadow = '0 0 10px rgba(255, 255, 255, 0.8)';
+                notification.style.zIndex = '100';
+                notification.style.pointerEvents = 'none';
+                notification.style.opacity = '0';
+                
+                // Add to canvas container
+                const canvasContainer = document.getElementById('canvas-container');
+                canvasContainer.appendChild(notification);
+                
+                // Animate the notification
+                gsap.to(notification, {
+                    opacity: 1,
+                    duration: 0.3,
+                    y: -50,
+                    onComplete: () => {
+                        gsap.to(notification, {
+                            opacity: 0,
+                            duration: 0.5,
+                            delay: 1.2,
+                            onComplete: () => {
+                                canvasContainer.removeChild(notification);
+                            }
+                        });
+                    }
+                });
+            }
+            
+            function createPanelEntranceTimeline(element, delay = 0) {
+                const tl = gsap.timeline({ delay: delay });
+                tl.fromTo(element, 
+                    { opacity: 0, y: 20 },
+                    { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }
+                );
+                return tl;
+            }
+            
+            function createPanelExitTimeline(element, delay = 0) {
+                const tl = gsap.timeline({ delay: delay });
+                tl.to(element, 
+                    { opacity: 0, y: -20, duration: 0.4, ease: "power2.in" }
+                );
+                return tl;
+            }
+            
+            function activatePowerUp(type) {
+                // Play sound effect
+                if (foodSound) {
+                    foodSound.currentTime = 0;
+                    foodSound.play().catch(e => {});
+                }
+                
+                // Add visual effect for powerup collection
+                createPowerUpParticles();
+                
+                switch(type) {
+                    case 'speed':
+                        activePowerUps.speed.active = true;
+                        activePowerUps.speed.timer = 300; // 5 seconds at 60fps
+                        p.frameRate(10 + (level * 2) + 10); // Increase speed
+                        // Visual feedback for speed powerup
+                        showPowerUpNotification("SPEED BOOST!", "rgb(59, 130, 246)");
+                        break;
+                    case 'shield':
+                        activePowerUps.shield.active = true;
+                        activePowerUps.shield.timer = 600; // 10 seconds
+                        // Visual feedback for shield powerup
+                        showPowerUpNotification("SHIELD ACTIVATED!", "rgb(139, 92, 246)");
+                        break;
+                    case 'slow':
+                        activePowerUps.slow.active = true;
+                        activePowerUps.slow.timer = 300; // 5 seconds
+                        p.frameRate(Math.max(5, 10 + (level * 2) - 5)); // Decrease speed
+                        // Visual feedback for slow powerup
+                        showPowerUpNotification("SLOW MOTION!", "rgb(236, 72, 153)");
+                        break;
+                    case 'duplicate':
+                        activePowerUps.duplicate.active = true;
+                        activePowerUps.duplicate.timer = 600; // 10 seconds
+                        // Create duplicate snake
+                        createDuplicateSnake();
+                        // Visual feedback for duplicate powerup
+                        showPowerUpNotification("DUPLICATE SNAKE!", "rgb(245, 158, 11)");
+                        break;
+                }
+            }
+            
+            function updatePowerUps() {
+                // Get powerup indicator elements
+                const speedIndicator = document.querySelector('.powerup-speed');
+                const shieldIndicator = document.querySelector('.powerup-shield');
+                const slowIndicator = document.querySelector('.powerup-slow');
+                const duplicateIndicator = document.querySelector('.powerup-duplicate');
+                
+                // Update timers and deactivate power-ups
+                if (activePowerUps.speed.active) {
+                    activePowerUps.speed.timer--;
+                    // Visual feedback for active speed powerup
+                    if (speedIndicator) {
+                        speedIndicator.style.boxShadow = `0 0 10px rgba(59, 130, 246, ${0.5 + 0.5 * Math.sin(Date.now() / 100)})`;
+                        speedIndicator.style.transform = `scale(${1 + 0.1 * Math.sin(Date.now() / 100)})`;
+                    }
+                    if (activePowerUps.speed.timer <= 0) {
+                        activePowerUps.speed.active = false;
+                        p.frameRate(10 + level * 2); // Reset to normal speed
+                        if (speedIndicator) {
+                            speedIndicator.style.boxShadow = 'none';
+                            speedIndicator.style.transform = 'scale(1)';
+                        }
+                        showPowerUpNotification("SPEED BOOST ENDED", "rgb(59, 130, 246)");
+                    }
+                } else if (speedIndicator) {
+                    speedIndicator.style.boxShadow = 'none';
+                    speedIndicator.style.transform = 'scale(1)';
+                }
+                
+                if (activePowerUps.shield.active) {
+                    activePowerUps.shield.timer--;
+                    // Visual feedback for active shield powerup
+                    if (shieldIndicator) {
+                        shieldIndicator.style.boxShadow = `0 0 10px rgba(139, 92, 246, ${0.5 + 0.5 * Math.sin(Date.now() / 100)})`;
+                        shieldIndicator.style.transform = `scale(${1 + 0.1 * Math.sin(Date.now() / 100)})`;
+                    }
+                    if (activePowerUps.shield.timer <= 0) {
+                        activePowerUps.shield.active = false;
+                        if (shieldIndicator) {
+                            shieldIndicator.style.boxShadow = 'none';
+                            shieldIndicator.style.transform = 'scale(1)';
+                        }
+                        showPowerUpNotification("SHIELD DEACTIVATED", "rgb(139, 92, 246)");
+                    }
+                } else if (shieldIndicator) {
+                    shieldIndicator.style.boxShadow = 'none';
+                    shieldIndicator.style.transform = 'scale(1)';
+                }
+                
+                if (activePowerUps.slow.active) {
+                    activePowerUps.slow.timer--;
+                    // Visual feedback for active slow powerup
+                    if (slowIndicator) {
+                        slowIndicator.style.boxShadow = `0 0 10px rgba(236, 72, 153, ${0.5 + 0.5 * Math.sin(Date.now() / 100)})`;
+                        slowIndicator.style.transform = `scale(${1 + 0.1 * Math.sin(Date.now() / 100)})`;
+                    }
+                    if (activePowerUps.slow.timer <= 0) {
+                        activePowerUps.slow.active = false;
+                        p.frameRate(10 + level * 2); // Reset to normal speed
+                        if (slowIndicator) {
+                            slowIndicator.style.boxShadow = 'none';
+                            slowIndicator.style.transform = 'scale(1)';
+                        }
+                        showPowerUpNotification("SLOW MOTION ENDED", "rgb(236, 72, 153)");
+                    }
+                } else if (slowIndicator) {
+                    slowIndicator.style.boxShadow = 'none';
+                    slowIndicator.style.transform = 'scale(1)';
+                }
+                
+                if (activePowerUps.duplicate.active) {
+                    activePowerUps.duplicate.timer--;
+                    // Visual feedback for active duplicate powerup
+                    if (duplicateIndicator) {
+                        duplicateIndicator.style.boxShadow = `0 0 10px rgba(245, 158, 11, ${0.5 + 0.5 * Math.sin(Date.now() / 100)})`;
+                        duplicateIndicator.style.transform = `scale(${1 + 0.1 * Math.sin(Date.now() / 100)})`;
+                    }
+                    if (activePowerUps.duplicate.timer <= 0) {
+                        activePowerUps.duplicate.active = false;
+                        // Remove duplicate snake
+                        removeDuplicateSnake();
+                        if (duplicateIndicator) {
+                            duplicateIndicator.style.boxShadow = 'none';
+                            duplicateIndicator.style.transform = 'scale(1)';
+                        }
+                        showPowerUpNotification("DUPLICATE SNAKE ENDED", "rgb(245, 158, 11)");
+                    }
+                } else if (duplicateIndicator) {
+                    duplicateIndicator.style.boxShadow = 'none';
+                    duplicateIndicator.style.transform = 'scale(1)';
+                }
+            }
+            
+            function addObstacle() {
+                // Only add if less than level/2 obstacles
+                if (obstacles.length >= Math.floor(level/2)) return;
+                
+                let newObstaclePos = p.createVector(p.floor(p.random(cols)), p.floor(p.random(rows)));
+                newObstaclePos.mult(boxSize);
+                
+                // Make sure position is not occupied
+                while (snake.isOnSnake(newObstaclePos) || 
+                       (food && newObstaclePos.x === food.x && newObstaclePos.y === food.y) ||
+                       isPositionOccupied(newObstaclePos)) {
+                    newObstaclePos = p.createVector(p.floor(p.random(cols)), p.floor(p.random(rows)));
+                    newObstaclePos.mult(boxSize);
+                }
+                
+                obstacles.push(newObstaclePos);
+            }
+            
+            function isPositionOccupied(pos) {
+                // Check if position is occupied by obstacles
+                for (let obs of obstacles) {
+                    if (obs.x === pos.x && obs.y === pos.y) {
+                        return true;
+                    }
+                }
+                
+                // Check if position is occupied by power-ups
+                for (let powerUp of powerUps) {
+                    if (powerUp.pos.x === pos.x && powerUp.pos.y === pos.y) {
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
 
             function gameOver() {
                 if (isReplayMode || isGameOver) return;
                 isGameOver = true;
                 setLeaderboardVisibility(false);
+                // Display player name
+                playerNameDisplay.textContent = playerName;
                 // Animate final score with GSAP
                 gsap.to(finalScoreEl, {
                     duration: 1,
@@ -1571,16 +2531,14 @@ function handleGetLeaderboard($pdo)
                     snap: { innerHTML: 1 },
                     ease: "power2.out"
                 });
+                
+                // Use GSAP timeline for entrance animation
                 gameOverEl.style.display = 'flex';
-                gsap.fromTo(gameOverEl, {
-                    opacity: 0,
-                    scale: 0.8
-                }, {
-                    opacity: 1,
-                    scale: 1,
-                    duration: 0.5,
-                    ease: 'power2.out'
-                });
+                // Kill any existing animations before starting new ones
+                gsap.killTweensOf(gameOverEl);
+                const tl = createPanelEntranceTimeline(gameOverEl);
+                tl.play();
+                
                 // Play intro splash sound again
                 if (introSplashSound) {
                     introSplashSound.currentTime = 0;
@@ -1592,12 +2550,6 @@ function handleGetLeaderboard($pdo)
                 }
                 // Show leaderboard directly
                 fetchLeaderboard();
-                // Provide exit strategy: allow restart or return to name entry
-                restartButton.onclick = () => {
-                    gameOverEl.style.display = 'none';
-                    nameEntryOverlay.style.display = 'flex';
-                    setupNameEntry();
-                };
                 p.noLoop();
             }
 
@@ -1606,6 +2558,11 @@ function handleGetLeaderboard($pdo)
                     exitReplay();
                     return;
                 }
+
+                // Kill any ongoing animations
+                gsap.killTweensOf(gameOverEl);
+                gsap.killTweensOf(nameEntryOverlay);
+                gsap.killTweensOf(scoreEl);
 
                 isGameOver = false;
                 score = 0;
@@ -1616,21 +2573,86 @@ function handleGetLeaderboard($pdo)
                 moveSequence = 0;
                 gameMoves = [];
                 gameId = null;
+                powerUps = [];
+                obstacles = [];
 
-                // Animate score reset with GSAP
+                // Reset power-ups
+                activePowerUps = {
+                    speed: { active: false, timer: 0 },
+                    shield: { active: false, timer: 0 },
+                    slow: { active: false, timer: 0 },
+                    duplicate: { active: false, timer: 0 }
+                };
+
+                // Reset score display
                 gsap.to(scoreEl, {
                     duration: 0.5,
                     innerHTML: score,
                     snap: { innerHTML: 1 },
                     ease: "power2.out"
                 });
-                levelEl.textContent = level;
+                gsap.to(levelEl, {
+                    duration: 0.5,
+                    innerHTML: level,
+                    snap: { innerHTML: 1 },
+                    ease: "power2.out"
+                });
+                updateProgress();
                 gameOverEl.style.display = 'none';
 
                 snake = new Snake();
                 placeFood();
                 p.loop();
                 p.frameRate(10);
+            }
+            
+            function returnToMenu() {
+                console.log('Returning to menu');
+                
+                // Make sure input field is enabled
+                playerNameInput.disabled = false;
+                playerNameInput.readOnly = false;
+                
+                // Use GSAP timeline for exit animation
+                const exitTl = createPanelExitTimeline(gameOverEl);
+                exitTl.eventCallback("onComplete", () => {
+                    gameOverEl.style.display = 'none';
+                    nameEntryOverlay.style.display = 'flex';
+                    setupNameEntry();
+                });
+                exitTl.play();
+                
+                // Re-enable the post score button
+                postScoreButton.disabled = false;
+            }
+            
+            function postScore() {
+                // Prevent multiple clicks
+                postScoreButton.disabled = true;
+                
+                // Save game data if not already saved
+                if (gameId) {
+                    saveGameData();
+                }
+                
+                // Show confirmation message
+                const t = translations[currentLang];
+                alert(`Score posted successfully, ${playerName}!`);
+                
+                // Remove the game over screen immediately
+                const exitTl = createPanelExitTimeline(gameOverEl);
+                exitTl.eventCallback("onComplete", () => {
+                    gameOverEl.style.display = 'none';
+                    nameEntryOverlay.style.display = 'flex';
+                    setupNameEntry();
+                });
+                exitTl.play();
+            }
+            
+            function updateProgress() {
+                // Update progress bar (0-5 food per level)
+                const progress = (score % 5) * 20;
+                progressFill.style.width = `${progress}%`;
             }
 
             async function fetchLeaderboard() {
@@ -1703,6 +2725,64 @@ function handleGetLeaderboard($pdo)
                     particles.push(new Particle(x + boxSize / 2, y + boxSize / 2));
                 }
             }
+            
+            // Create particles when collecting a power-up
+            function createPowerUpParticles() {
+                for (let i = 0; i < 30; i++) {
+                    particles.push(new PowerUpParticle());
+                }
+            }
+            
+            function createDuplicateSnake() {
+                // Create a duplicate of the current snake
+                duplicateSnake = new Snake();
+                // Copy the body of the original snake
+                duplicateSnake.body = [];
+                for (let i = 0; i < snake.body.length; i++) {
+                    duplicateSnake.body.push(snake.body[i].copy());
+                }
+                // Copy the direction
+                duplicateSnake.xdir = snake.xdir;
+                duplicateSnake.ydir = snake.ydir;
+            }
+            
+            function removeDuplicateSnake() {
+                duplicateSnake = null;
+            }
+            
+            function createPanelEntranceTimeline(element, delay = 0) {
+                const tl = gsap.timeline({ delay: delay });
+                tl.fromTo(element, 
+                    { opacity: 0, y: 20 },
+                    { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }
+                );
+                return tl;
+            }
+            
+            function createPanelExitTimeline(element, delay = 0) {
+                const tl = gsap.timeline({ delay: delay });
+                tl.to(element, 
+                    { opacity: 0, y: -20, duration: 0.4, ease: "power2.in" }
+                );
+                return tl;
+            }
+            
+            function createDuplicateSnake() {
+                // Create a duplicate of the current snake
+                duplicateSnake = new Snake();
+                // Copy the body of the original snake
+                duplicateSnake.body = [];
+                for (let i = 0; i < snake.body.length; i++) {
+                    duplicateSnake.body.push(snake.body[i].copy());
+                }
+                // Copy the direction
+                duplicateSnake.xdir = snake.xdir;
+                duplicateSnake.ydir = snake.ydir;
+            }
+            
+            function removeDuplicateSnake() {
+                duplicateSnake = null;
+            }
             class Particle {
                 constructor(x, y) {
                     this.pos = p.createVector(x, y);
@@ -1723,8 +2803,35 @@ function handleGetLeaderboard($pdo)
                     return this.lifespan < 0;
                 }
             }
+            
+            class PowerUpParticle {
+                constructor() {
+                    // Create particle at center of screen
+                    this.pos = p.createVector(p.width / 2, p.height / 2);
+                    // Random direction
+                    this.vel = p5.Vector.random2D().mult(p.random(2, 8));
+                    this.lifespan = 255;
+                    this.size = p.random(3, 8);
+                    // Random bright color for powerup effect
+                    this.color = p.color(p.random(100, 255), p.random(100, 255), p.random(100, 255));
+                }
+                update() {
+                    this.pos.add(this.vel);
+                    this.lifespan -= 7;
+                    // Add gravity effect
+                    this.vel.y += 0.1;
+                }
+                show() {
+                    p.noStroke();
+                    p.fill(this.color.levels[0], this.color.levels[1], this.color.levels[2], this.lifespan);
+                    p.ellipse(this.pos.x, this.pos.y, this.size);
+                }
+                isFinished() {
+                    return this.lifespan < 0;
+                }
+            }
 
-            // --- Snake Class (Unchanged) ---
+            // --- Snake Class (Enhanced) ---
             class Snake {
                 constructor() {
                     this.body = [];
@@ -1778,21 +2885,114 @@ function handleGetLeaderboard($pdo)
                 }
                 checkCollision() {
                     let head = this.body[this.body.length - 1];
+                    
+                    // Wall collision
                     if (head.x >= p.width || head.x < 0 || head.y >= p.height || head.y < 0) {
-                        gameOver();
+                        if (!activePowerUps.shield.active) {
+                            gameOver();
+                            return;
+                        }
                     }
+                    
+                    // Self collision
                     for (let i = 0; i < this.body.length - 1; i++) {
                         let part = this.body[i];
                         if (part.x === head.x && part.y === head.y) {
-                            gameOver();
+                            if (!activePowerUps.shield.active) {
+                                gameOver();
+                                return;
+                            }
+                        }
+                    }
+                    
+                    // Obstacle collision
+                    for (let obs of obstacles) {
+                        if (head.x === obs.x && head.y === obs.y) {
+                            if (!activePowerUps.shield.active) {
+                                gameOver();
+                                return;
+                            }
                         }
                     }
                 }
-                show() {
+                
+                // Check collision but don't trigger game over (for duplicate snake)
+                checkCollisionNoGameOver() {
+                    let head = this.body[this.body.length - 1];
+                    
+                    // Wall collision - just stop the duplicate snake
+                    if (head.x >= p.width || head.x < 0 || head.y >= p.height || head.y < 0) {
+                        return;
+                    }
+                    
+                    // Self collision - just stop the duplicate snake
+                    for (let i = 0; i < this.body.length - 1; i++) {
+                        let part = this.body[i];
+                        if (part.x === head.x && part.y === head.y) {
+                            return;
+                        }
+                    }
+                    
+                    // Obstacle collision - just stop the duplicate snake
+                    for (let obs of obstacles) {
+                        if (head.x === obs.x && head.y === obs.y) {
+                            return;
+                        }
+                    }
+                }
+                
+                show(isDuplicate = false) {
                     for (let i = 0; i < this.body.length; i++) {
-                        p.fill(i === this.body.length - 1 ? 'rgb(45, 212, 191)' : 'rgb(16, 185, 129)');
+                        // Head color
+                        if (i === this.body.length - 1) {
+                            if (activePowerUps.shield.active && !isDuplicate) {
+                                p.fill('rgb(139, 92, 246)'); // Purple when shielded
+                            } else if (isDuplicate) {
+                                p.fill('rgb(245, 158, 11)'); // Amber for duplicate snake
+                            } else {
+                                p.fill('rgb(45, 212, 191)'); // Teal for head
+                            }
+                        } 
+                        // Body color with gradient
+                        else {
+                            if (isDuplicate) {
+                                const colorValue = 140 - (i % 5) * 10;
+                                p.fill(`rgb(${colorValue}, 140, 80)`); // Greenish gradient for duplicate
+                            } else {
+                                const colorValue = 165 - (i % 5) * 10;
+                                p.fill(`rgb(16, ${colorValue}, 129)`); // Blue gradient
+                            }
+                        }
+                        
                         p.noStroke();
                         p.rect(this.body[i].x, this.body[i].y, boxSize, boxSize, 4);
+                        
+                        // Add glow effect when powerups are active
+                        if (!isDuplicate && (activePowerUps.speed.active || activePowerUps.shield.active || activePowerUps.slow.active)) {
+                            p.fill(255, 255, 255, 30);
+                            p.rect(this.body[i].x, this.body[i].y, boxSize + 4, boxSize + 4, 6);
+                        }
+                        
+                        // Add eyes to the head
+                        if (i === this.body.length - 1) {
+                            p.fill(0);
+                            const eyeSize = boxSize / 5;
+                            
+                            // Position eyes based on direction
+                            if (this.xdir === 1) { // Right
+                                p.ellipse(this.body[i].x + boxSize * 0.7, this.body[i].y + boxSize * 0.3, eyeSize);
+                                p.ellipse(this.body[i].x + boxSize * 0.7, this.body[i].y + boxSize * 0.7, eyeSize);
+                            } else if (this.xdir === -1) { // Left
+                                p.ellipse(this.body[i].x + boxSize * 0.3, this.body[i].y + boxSize * 0.3, eyeSize);
+                                p.ellipse(this.body[i].x + boxSize * 0.3, this.body[i].y + boxSize * 0.7, eyeSize);
+                            } else if (this.ydir === 1) { // Down
+                                p.ellipse(this.body[i].x + boxSize * 0.3, this.body[i].y + boxSize * 0.7, eyeSize);
+                                p.ellipse(this.body[i].x + boxSize * 0.7, this.body[i].y + boxSize * 0.7, eyeSize);
+                            } else { // Up
+                                p.ellipse(this.body[i].x + boxSize * 0.3, this.body[i].y + boxSize * 0.3, eyeSize);
+                                p.ellipse(this.body[i].x + boxSize * 0.7, this.body[i].y + boxSize * 0.3, eyeSize);
+                            }
+                        }
                     }
                 }
             }
