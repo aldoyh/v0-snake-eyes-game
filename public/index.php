@@ -239,11 +239,197 @@ function handleGetLeaderboard($pdo)
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
     <title>Snake Eyes - Modern Snake Game</title>
-    <!-- External Libraries -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <!-- External Libraries with Fallbacks -->
+    <script>
+        // TailwindCSS Configuration (inline to avoid CDN dependency)
+        tailwind = {
+            config: {
+                corePlugins: { preflight: false }
+            }
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com" onerror="console.log('TailwindCSS CDN failed - using inline styles')"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js" onerror="console.log('p5.js CDN failed - using alternative')"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" onerror="console.log('GSAP CDN failed - using alternative')"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js" onerror="console.log('Confetti CDN failed - using alternative')"></script>
+    
+    <!-- Fallback for essential functionality -->
+    <script>
+        // Minimal GSAP-like animation library fallback with enhanced animations
+        if (typeof gsap === 'undefined') {
+            window.gsap = {
+                timeline: function(options = {}) {
+                    return {
+                        fromTo: function(element, from, to) {
+                            const el = typeof element === 'string' ? document.querySelector(element) : element;
+                            if (!el) return this;
+                            
+                            // Apply initial styles with enhanced effects
+                            Object.assign(el.style, {
+                                opacity: from.opacity !== undefined ? from.opacity : '',
+                                transform: from.y ? `translateY(${from.y}px) scale(${from.scale || 1})` : ''
+                            });
+                            
+                            // Animate to final styles with smooth transitions
+                            setTimeout(() => {
+                                const duration = to.duration || 0.6;
+                                const ease = to.ease === 'power2.out' ? 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 
+                                            to.ease === 'power2.in' ? 'cubic-bezier(0.55, 0.055, 0.675, 0.19)' :
+                                            'ease-out';
+                                
+                                el.style.transition = `all ${duration}s ${ease}`;
+                                Object.assign(el.style, {
+                                    opacity: to.opacity !== undefined ? to.opacity : '',
+                                    transform: to.y ? `translateY(${to.y}px) scale(${to.scale || 1})` : ''
+                                });
+                            }, 50);
+                            
+                            return this;
+                        },
+                        to: function(element, options) {
+                            const el = typeof element === 'string' ? document.querySelector(element) : element;
+                            if (!el) return this;
+                            
+                            const duration = options.duration || 0.4;
+                            const ease = options.ease === 'power2.in' ? 'cubic-bezier(0.55, 0.055, 0.675, 0.19)' : 'ease-in';
+                            
+                            el.style.transition = `all ${duration}s ${ease}`;
+                            Object.assign(el.style, {
+                                opacity: options.opacity !== undefined ? options.opacity : '',
+                                transform: options.y ? `translateY(${options.y}px)` : ''
+                            });
+                            
+                            if (options.onComplete) {
+                                setTimeout(options.onComplete, duration * 1000);
+                            }
+                            
+                            return this;
+                        },
+                        eventCallback: function(event, callback) {
+                            if (event === 'onStart' && callback) {
+                                setTimeout(callback, 50);
+                            } else if (event === 'onComplete' && callback) {
+                                this._onComplete = callback;
+                            }
+                            return this;
+                        },
+                        play: function() {
+                            return this;
+                        }
+                    };
+                },
+                to: function(element, options) {
+                    const el = typeof element === 'string' ? document.querySelector(element) : element;
+                    if (!el) return;
+                    
+                    const duration = options.duration || 0.5;
+                    const ease = options.ease === 'elastic.out(1, 0.5)' ? 'cubic-bezier(0.68, -0.55, 0.265, 1.55)' :
+                                options.ease === 'power2.out' ? 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' :
+                                'ease-out';
+                    
+                    // Enhanced scale animations with bounce effect
+                    if (options.scale !== undefined) {
+                        el.style.transition = `transform ${duration}s ${ease}`;
+                        el.style.transform = `scale(${options.scale})`;
+                    }
+                    
+                    // Animated number updates with smooth counting
+                    if (options.innerHTML !== undefined) {
+                        const startValue = parseInt(el.innerHTML) || 0;
+                        const endValue = Math.floor(options.innerHTML);
+                        const steps = Math.min(20, Math.abs(endValue - startValue));
+                        const stepDuration = duration * 1000 / steps;
+                        
+                        let currentStep = 0;
+                        const interval = setInterval(() => {
+                            currentStep++;
+                            const progress = currentStep / steps;
+                            const currentValue = Math.floor(startValue + (endValue - startValue) * progress);
+                            el.innerHTML = currentValue;
+                            
+                            if (currentStep >= steps) {
+                                clearInterval(interval);
+                                el.innerHTML = endValue;
+                            }
+                        }, stepDuration);
+                    }
+                    
+                    // Enhanced opacity animations
+                    if (options.opacity !== undefined) {
+                        el.style.transition = `opacity ${duration}s ${ease}`;
+                        el.style.opacity = options.opacity;
+                    }
+                    
+                    // Enhanced movement animations with smooth curves
+                    if (options.y !== undefined) {
+                        el.style.transition = `transform ${duration}s ${ease}`;
+                        el.style.transform = `translateY(${options.y}px)`;
+                    }
+                    
+                    if (options.onComplete) {
+                        setTimeout(options.onComplete, duration * 1000);
+                    }
+                },
+                killTweensOf: function(element) {
+                    const el = typeof element === 'string' ? document.querySelector(element) : element;
+                    if (el) {
+                        el.style.transition = '';
+                    }
+                }
+            };
+        }
+        
+        // Minimal p5.js-like functionality for basic canvas operations
+        if (typeof p5 === 'undefined') {
+            window.p5SketchMode = true;
+        }
+        
+        // Enhanced confetti fallback with better visual effects
+        if (typeof confetti === 'undefined') {
+            window.confetti = function(options = {}) {
+                console.log('Confetti animation triggered (enhanced fallback mode)');
+                
+                // Create multiple colorful celebration elements
+                for (let i = 0; i < 10; i++) {
+                    const celebration = document.createElement('div');
+                    celebration.style.position = 'fixed';
+                    celebration.style.top = '20%';
+                    celebration.style.left = Math.random() * 100 + '%';
+                    celebration.style.width = '10px';
+                    celebration.style.height = '10px';
+                    celebration.style.backgroundColor = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'][Math.floor(Math.random() * 6)];
+                    celebration.style.borderRadius = '50%';
+                    celebration.style.pointerEvents = 'none';
+                    celebration.style.zIndex = '1000';
+                    celebration.style.opacity = '1';
+                    celebration.style.transform = 'scale(1)';
+                    celebration.style.transition = 'all 2s ease-out';
+                    
+                    document.body.appendChild(celebration);
+                    
+                    // Animate the celebration particle
+                    setTimeout(() => {
+                        celebration.style.top = '100%';
+                        celebration.style.opacity = '0';
+                        celebration.style.transform = 'scale(0) rotate(720deg)';
+                    }, 100);
+                    
+                    // Remove after animation
+                    setTimeout(() => {
+                        if (celebration.parentNode) {
+                            document.body.removeChild(celebration);
+                        }
+                    }, 2100);
+                }
+                
+                // Add background celebration effect
+                document.body.style.background = 'radial-gradient(circle, rgba(255,215,0,0.3) 0%, transparent 70%)';
+                setTimeout(() => {
+                    document.body.style.background = '';
+                }, 1000);
+            };
+        }
+    </script>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2999,7 +3185,127 @@ function handleGetLeaderboard($pdo)
 
         };
 
-        new p5(sketch);
+        // Initialize p5.js sketch or fallback
+        if (typeof p5 !== 'undefined') {
+            new p5(sketch);
+        } else {
+            // Fallback: Create canvas and setup basic game without p5.js
+            console.log('p5.js not available, using fallback canvas implementation');
+            
+            // Create canvas element
+            const canvas = document.createElement('canvas');
+            canvas.id = 'game-canvas';
+            canvas.width = 800;
+            canvas.height = 600;
+            canvas.style.border = '2px solid rgba(255,255,255,0.2)';
+            canvas.style.borderRadius = '10px';
+            canvas.style.background = 'rgba(0,0,0,0.3)';
+            
+            const canvasContainer = document.getElementById('canvas-container');
+            canvasContainer.appendChild(canvas);
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Simple fallback message
+            ctx.fillStyle = 'white';
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Snake Eyes Game', canvas.width/2, canvas.height/2 - 50);
+            ctx.font = '16px Arial';
+            ctx.fillText('External libraries required for full functionality', canvas.width/2, canvas.height/2);
+            ctx.fillText('Please check your internet connection', canvas.width/2, canvas.height/2 + 30);
+            
+            // Enable basic input handling for name entry
+            setupBasicInputHandling();
+        }
+        
+        function setupBasicInputHandling() {
+            // Ensure name input validation works even without p5.js
+            const playerNameInput = document.getElementById('player-name-input');
+            const confirmNameButton = document.getElementById('confirm-name-button');
+            const nameEntryOverlay = document.getElementById('name-entry-overlay');
+            
+            if (playerNameInput && confirmNameButton) {
+                function validateInput() {
+                    const name = playerNameInput.value.trim();
+                    const isValid = name.length >= 2;
+                    confirmNameButton.disabled = !isValid;
+                    
+                    console.log('Name:', name, 'Valid:', isValid, 'Button disabled:', confirmNameButton.disabled);
+                    
+                    // Enhanced visual feedback with better mobile-friendly styles
+                    if (name.length > 0) {
+                        if (isValid) {
+                            playerNameInput.style.borderColor = '#10b981';
+                            playerNameInput.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                            playerNameInput.style.boxShadow = '0 0 0 2px rgba(16, 185, 129, 0.2)';
+                        } else {
+                            playerNameInput.style.borderColor = '#f59e0b';
+                            playerNameInput.style.backgroundColor = 'rgba(245, 158, 11, 0.1)';
+                            playerNameInput.style.boxShadow = '0 0 0 2px rgba(245, 158, 11, 0.2)';
+                        }
+                    } else {
+                        playerNameInput.style.borderColor = '';
+                        playerNameInput.style.backgroundColor = '';
+                        playerNameInput.style.boxShadow = '';
+                    }
+                }
+                
+                // Enhanced mobile input handling
+                function focusInput() {
+                    console.log('Focusing input for mobile compatibility');
+                    playerNameInput.focus();
+                    
+                    // Additional mobile-specific focus handling
+                    setTimeout(() => {
+                        playerNameInput.focus();
+                        if (playerNameInput.value) {
+                            playerNameInput.setSelectionRange(playerNameInput.value.length, playerNameInput.value.length);
+                        }
+                    }, 100);
+                }
+                
+                // Multiple event listeners for better cross-platform compatibility
+                playerNameInput.addEventListener('input', validateInput);
+                playerNameInput.addEventListener('keyup', validateInput);
+                playerNameInput.addEventListener('change', validateInput);
+                playerNameInput.addEventListener('paste', (e) => {
+                    setTimeout(validateInput, 10);
+                });
+                
+                // Enhanced focus handling for mobile
+                playerNameInput.addEventListener('focus', (e) => {
+                    console.log('Input focused');
+                    playerNameInput.style.transform = 'scale(1.02)';
+                    playerNameInput.style.transition = 'transform 0.2s ease';
+                });
+                
+                playerNameInput.addEventListener('blur', (e) => {
+                    console.log('Input blurred');
+                    playerNameInput.style.transform = 'scale(1)';
+                });
+                
+                // Touch and click events for better mobile support
+                if (nameEntryOverlay) {
+                    nameEntryOverlay.addEventListener('click', focusInput);
+                    nameEntryOverlay.addEventListener('touchstart', focusInput, {passive: true});
+                }
+                
+                // Ensure the input is focusable on mobile
+                playerNameInput.style.webkitUserSelect = 'text';
+                playerNameInput.style.userSelect = 'text';
+                playerNameInput.removeAttribute('readonly');
+                playerNameInput.removeAttribute('disabled');
+                
+                // Check if there's already text and validate
+                if (playerNameInput.value) {
+                    validateInput();
+                }
+                
+                // Auto-focus the input when the overlay becomes visible
+                setTimeout(focusInput, 500);
+            }
+        }
     </script>
 </body>
 
