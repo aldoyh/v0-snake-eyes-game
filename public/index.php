@@ -33,8 +33,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             direction TEXT NOT NULL,
             timestamp_ms INTEGER NOT NULL,
             snake_length INTEGER NOT NULL,
+            snake_head_x INTEGER NOT NULL,
+            snake_head_y INTEGER NOT NULL,
             food_x INTEGER NOT NULL,
             food_y INTEGER NOT NULL,
+            score INTEGER NOT NULL DEFAULT 0,
+            level INTEGER NOT NULL DEFAULT 1,
+            event_type TEXT DEFAULT NULL,
+            event_data TEXT DEFAULT NULL,
+            power_ups_data TEXT DEFAULT NULL,
+            obstacles_data TEXT DEFAULT NULL,
+            FOREIGN KEY (game_id) REFERENCES games (id)
+        )");
+
+        // Table for storing initial game state for proper replay initialization
+        $pdo->exec("CREATE TABLE IF NOT EXISTS game_initial_state (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            game_id INTEGER NOT NULL UNIQUE,
+            initial_snake_x INTEGER NOT NULL,
+            initial_snake_y INTEGER NOT NULL,
+            initial_snake_direction TEXT NOT NULL,
+            initial_food_x INTEGER NOT NULL,
+            initial_food_y INTEGER NOT NULL,
+            grid_cols INTEGER NOT NULL,
+            grid_rows INTEGER NOT NULL,
+            box_size INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (game_id) REFERENCES games (id)
         )");
 
@@ -62,6 +86,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     break;
                 case 'save_move':
                     handleSaveMove($pdo, $data);
+                    break;
+                case 'save_initial_state':
+                    handleSaveInitialState($pdo, $data);
                     break;
                 default:
                     // Legacy score saving
@@ -127,7 +154,7 @@ function handleSaveMove($pdo, $data)
     if (
         !isset($data->game_id) || !isset($data->move_sequence) || !isset($data->direction) ||
         !isset($data->timestamp_ms) || !isset($data->snake_length) ||
-        !isset($data->food_x) || !isset($data->food_y)
+        !isset($data->food_x) || !isset($data->food_y) || !isset($data->snake_head_x) || !isset($data->snake_head_y)
     ) {
         http_response_code(400);
         echo json_encode(['message' => 'Missing required move data']);
@@ -135,15 +162,31 @@ function handleSaveMove($pdo, $data)
     }
 
     try {
-        $stmt = $pdo->prepare("INSERT INTO game_moves (game_id, move_sequence, direction, timestamp_ms, snake_length, food_x, food_y)
-                              VALUES (:game_id, :move_sequence, :direction, :timestamp_ms, :snake_length, :food_x, :food_y)");
+        $stmt = $pdo->prepare("INSERT INTO game_moves (
+            game_id, move_sequence, direction, timestamp_ms, snake_length, 
+            snake_head_x, snake_head_y, food_x, food_y, score, level, 
+            event_type, event_data, power_ups_data, obstacles_data
+        ) VALUES (
+            :game_id, :move_sequence, :direction, :timestamp_ms, :snake_length,
+            :snake_head_x, :snake_head_y, :food_x, :food_y, :score, :level,
+            :event_type, :event_data, :power_ups_data, :obstacles_data
+        )");
+        
         $stmt->bindParam(':game_id', $data->game_id);
         $stmt->bindParam(':move_sequence', $data->move_sequence);
         $stmt->bindParam(':direction', $data->direction);
         $stmt->bindParam(':timestamp_ms', $data->timestamp_ms);
         $stmt->bindParam(':snake_length', $data->snake_length);
+        $stmt->bindParam(':snake_head_x', $data->snake_head_x);
+        $stmt->bindParam(':snake_head_y', $data->snake_head_y);
         $stmt->bindParam(':food_x', $data->food_x);
         $stmt->bindParam(':food_y', $data->food_y);
+        $stmt->bindParam(':score', $data->score ?? 0);
+        $stmt->bindParam(':level', $data->level ?? 1);
+        $stmt->bindParam(':event_type', $data->event_type ?? null);
+        $stmt->bindParam(':event_data', $data->event_data ?? null);
+        $stmt->bindParam(':power_ups_data', $data->power_ups_data ?? null);
+        $stmt->bindParam(':obstacles_data', $data->obstacles_data ?? null);
         $stmt->execute();
 
         echo json_encode(['message' => 'Move saved successfully']);
@@ -177,6 +220,47 @@ function handleLegacyScore($pdo, $data)
     }
 }
 
+function handleSaveInitialState($pdo, $data)
+{
+    if (
+        !isset($data->game_id) || !isset($data->initial_snake_x) || !isset($data->initial_snake_y) ||
+        !isset($data->initial_snake_direction) || !isset($data->initial_food_x) || !isset($data->initial_food_y) ||
+        !isset($data->grid_cols) || !isset($data->grid_rows) || !isset($data->box_size)
+    ) {
+        http_response_code(400);
+        echo json_encode(['message' => 'Missing required initial state data']);
+        return;
+    }
+
+    try {
+        // Use INSERT OR REPLACE to handle potential duplicates
+        $stmt = $pdo->prepare("INSERT OR REPLACE INTO game_initial_state (
+            game_id, initial_snake_x, initial_snake_y, initial_snake_direction,
+            initial_food_x, initial_food_y, grid_cols, grid_rows, box_size
+        ) VALUES (
+            :game_id, :initial_snake_x, :initial_snake_y, :initial_snake_direction,
+            :initial_food_x, :initial_food_y, :grid_cols, :grid_rows, :box_size
+        )");
+        
+        $stmt->bindParam(':game_id', $data->game_id);
+        $stmt->bindParam(':initial_snake_x', $data->initial_snake_x);
+        $stmt->bindParam(':initial_snake_y', $data->initial_snake_y);
+        $stmt->bindParam(':initial_snake_direction', $data->initial_snake_direction);
+        $stmt->bindParam(':initial_food_x', $data->initial_food_x);
+        $stmt->bindParam(':initial_food_y', $data->initial_food_y);
+        $stmt->bindParam(':grid_cols', $data->grid_cols);
+        $stmt->bindParam(':grid_rows', $data->grid_rows);
+        $stmt->bindParam(':box_size', $data->box_size);
+        $stmt->execute();
+
+        echo json_encode(['message' => 'Initial state saved successfully']);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['message' => 'Failed to save initial state: ' . $e->getMessage()]);
+    }
+}
+}
+
 function handleGetReplay($pdo, $gameId)
 {
     if (!$gameId) {
@@ -204,9 +288,16 @@ function handleGetReplay($pdo, $gameId)
         $stmt->execute();
         $moves = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        // Get initial state for this game
+        $stmt = $pdo->prepare("SELECT * FROM game_initial_state WHERE game_id = :game_id");
+        $stmt->bindParam(':game_id', $gameId);
+        $stmt->execute();
+        $initialState = $stmt->fetch(PDO::FETCH_ASSOC);
+
         echo json_encode([
             'game' => $game,
-            'moves' => $moves
+            'moves' => $moves,
+            'initial_state' => $initialState
         ]);
     } catch (PDOException $e) {
         http_response_code(500);
@@ -986,6 +1077,9 @@ function handleGetLeaderboard($pdo)
         <div class="mt-4 text-2xl font-game flex justify-center items-center gap-8 score-level">
             <div class="text-content"><span id="score-label">SCORE</span>: <span id="score" class="text-yellow-400">0</span></div>
             <div class="text-content"><span id="level-label">LEVEL</span>: <span id="level" class="text-cyan-400">1</span></div>
+            <div id="recording-indicator" class="text-content text-red-500 text-sm hidden">
+                <span class="animate-pulse">●</span> <span id="recording-label">REC</span>
+            </div>
         </div>
         <!-- Progress bar for next level -->
         <div class="progress-bar mt-2 mx-auto max-w-xs">
@@ -1113,6 +1207,7 @@ function handleGetLeaderboard($pdo)
                 subtitle: 'Swipe anywhere to control the snake',
                 scoreLabel: 'SCORE',
                 levelLabel: 'LEVEL',
+                recordingLabel: 'REC',
                 gameOverTitle: 'GAME OVER',
                 finalScoreLabel: 'Your score',
                 restartButton: 'PLAY AGAIN',
@@ -1144,6 +1239,7 @@ function handleGetLeaderboard($pdo)
                 subtitle: 'اسحب في أي مكان للتحكم في الثعبان',
                 scoreLabel: 'النتيجة',
                 levelLabel: 'المستوى',
+                recordingLabel: 'تسجيل',
                 gameOverTitle: 'انتهت اللعبة',
                 finalScoreLabel: 'نتيجتك',
                 restartButton: 'اللعب مجددًا',
@@ -1184,6 +1280,7 @@ function handleGetLeaderboard($pdo)
             document.getElementById('subtitle').textContent = t.subtitle;
             document.getElementById('score-label').textContent = t.scoreLabel;
             document.getElementById('level-label').textContent = t.levelLabel;
+            document.getElementById('recording-label').textContent = t.recordingLabel;
             document.getElementById('game-over-title').textContent = t.gameOverTitle;
             document.getElementById('final-score-label').innerHTML = t.finalScoreLabel;
             document.getElementById('restart-button').textContent = t.restartButton;
@@ -1262,6 +1359,7 @@ function handleGetLeaderboard($pdo)
             // DOM Elements
             const scoreEl = document.getElementById('score');
             const levelEl = document.getElementById('level');
+            const recordingIndicatorEl = document.getElementById('recording-indicator');
             const finalScoreEl = document.getElementById('final-score');
             const playerNameDisplay = document.getElementById('player-name-display');
             const gameOverEl = document.getElementById('game-over');
@@ -1515,6 +1613,13 @@ function handleGetLeaderboard($pdo)
                     }
                 }
                 if (!isReplayMode && snake && snake.eat(food)) {
+                    // Log food eaten event
+                    logGameEvent('food_eaten', {
+                        position: { x: food.x / boxSize, y: food.y / boxSize },
+                        score_before: score,
+                        score_after: score + 1
+                    });
+                    
                     createParticles(food.x, food.y);
                     placeFood();
                     // Play snake eat sound
@@ -1538,7 +1643,16 @@ function handleGetLeaderboard($pdo)
                     updateProgress();
                     checkRankAndConfetti();
                     if (score > 0 && score % 5 === 0) {
+                        const oldLevel = level;
                         level++;
+                        
+                        // Log level up event
+                        logGameEvent('level_up', {
+                            old_level: oldLevel,
+                            new_level: level,
+                            score: score
+                        });
+                        
                         // Animate level with GSAP
                         gsap.to(levelEl, {
                             duration: 0.5,
@@ -1562,7 +1676,16 @@ function handleGetLeaderboard($pdo)
                 if (!isReplayMode && snake) {
                     for (let i = powerUps.length - 1; i >= 0; i--) {
                         if (snake.eat(powerUps[i].pos)) {
-                            activatePowerUp(powerUps[i].type);
+                            const powerUpType = powerUps[i].type;
+                            const powerUpPos = { x: powerUps[i].pos.x / boxSize, y: powerUps[i].pos.y / boxSize };
+                            
+                            // Log power-up collection event
+                            logGameEvent('power_up_collected', {
+                                type: powerUpType,
+                                position: powerUpPos
+                            });
+                            
+                            activatePowerUp(powerUpType);
                             powerUps.splice(i, 1);
                             // Play special sound for powerup collection
                             if (foodSound) {
@@ -1577,6 +1700,14 @@ function handleGetLeaderboard($pdo)
                 // Check if duplicate snake eats food
                 if (!isReplayMode && duplicateSnake) {
                     if (duplicateSnake.eat(food)) {
+                        // Log duplicate snake food eaten event
+                        logGameEvent('food_eaten', {
+                            position: { x: food.x / boxSize, y: food.y / boxSize },
+                            score_before: score,
+                            score_after: score + 1,
+                            eaten_by: 'duplicate_snake'
+                        });
+                        
                         // If duplicate snake eats food, grow the original snake too
                         snake.grow();
                         createParticles(food.x, food.y);
@@ -1810,21 +1941,49 @@ function handleGetLeaderboard($pdo)
 
             function logMove(newDirection) {
                 if (!gameId || isReplayMode) return;
+                
+                // Get current snake head position
+                const head = snake.body[0];
+                
+                // Serialize power-ups data
+                const powerUpsData = powerUps.map(pu => ({
+                    x: pu.pos.x / boxSize,
+                    y: pu.pos.y / boxSize,
+                    type: pu.type
+                }));
+                
+                // Serialize obstacles data
+                const obstaclesData = obstacles.map(obs => ({
+                    x: obs.x / boxSize,
+                    y: obs.y / boxSize
+                }));
+                
                 const move = {
                     game_id: gameId,
                     move_sequence: moveSequence++,
                     direction: newDirection,
                     timestamp_ms: Date.now() - gameStartTime,
                     snake_length: snake.body.length,
+                    snake_head_x: head.x / boxSize,
+                    snake_head_y: head.y / boxSize,
                     food_x: food ? food.x / boxSize : 0,
-                    food_y: food ? food.y / boxSize : 0
+                    food_y: food ? food.y / boxSize : 0,
+                    score: score,
+                    level: level,
+                    event_type: null, // Will be set for special events like food eaten, power-up collected
+                    event_data: null,
+                    power_ups_data: JSON.stringify(powerUpsData),
+                    obstacles_data: JSON.stringify(obstaclesData)
                 };
+                
                 gameMoves.push(move);
+                
                 // Play move sound
                 if (moveSound) {
                     moveSound.currentTime = 0;
                     moveSound.play().catch(e => {});
                 }
+                
                 // Save move to backend (async, no await to avoid blocking)
                 fetch('', {
                     method: 'POST',
@@ -1836,6 +1995,58 @@ function handleGetLeaderboard($pdo)
                         ...move
                     })
                 }).catch(error => console.error('Failed to save move:', error));
+            }
+
+            function logGameEvent(eventType, eventData = null) {
+                if (!gameId || isReplayMode) return;
+                
+                // Get current snake head position
+                const head = snake.body[0];
+                
+                // Serialize power-ups data
+                const powerUpsData = powerUps.map(pu => ({
+                    x: pu.pos.x / boxSize,
+                    y: pu.pos.y / boxSize,
+                    type: pu.type
+                }));
+                
+                // Serialize obstacles data
+                const obstaclesData = obstacles.map(obs => ({
+                    x: obs.x / boxSize,
+                    y: obs.y / boxSize
+                }));
+                
+                const move = {
+                    game_id: gameId,
+                    move_sequence: moveSequence++,
+                    direction: snake.xdir === 1 ? 'right' : snake.xdir === -1 ? 'left' : snake.ydir === 1 ? 'down' : 'up',
+                    timestamp_ms: Date.now() - gameStartTime,
+                    snake_length: snake.body.length,
+                    snake_head_x: head.x / boxSize,
+                    snake_head_y: head.y / boxSize,
+                    food_x: food ? food.x / boxSize : 0,
+                    food_y: food ? food.y / boxSize : 0,
+                    score: score,
+                    level: level,
+                    event_type: eventType,
+                    event_data: eventData ? JSON.stringify(eventData) : null,
+                    power_ups_data: JSON.stringify(powerUpsData),
+                    obstacles_data: JSON.stringify(obstaclesData)
+                };
+                
+                gameMoves.push(move);
+                
+                // Save event to backend (async, no await to avoid blocking)
+                fetch('', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'save_move',
+                        ...move
+                    })
+                }).catch(error => console.error('Failed to save event:', error));
             }
 
             async function saveGameData() {
@@ -1862,9 +2073,48 @@ function handleGetLeaderboard($pdo)
                         const result = await response.json();
                         gameId = result.game_id;
                         console.log('Game saved with ID:', gameId);
+                        
+                        // Save initial game state for proper replay
+                        await saveInitialGameState();
                     }
                 } catch (error) {
                     console.error('Failed to save game:', error);
+                }
+            }
+
+            async function saveInitialGameState() {
+                if (!gameId || !snake || !food) return;
+                
+                const head = snake.body[0];
+                const direction = snake.xdir === 1 ? 'right' : snake.xdir === -1 ? 'left' : snake.ydir === 1 ? 'down' : 'up';
+                
+                const initialState = {
+                    action: 'save_initial_state',
+                    game_id: gameId,
+                    initial_snake_x: head.x / boxSize,
+                    initial_snake_y: head.y / boxSize,
+                    initial_snake_direction: direction,
+                    initial_food_x: food.x / boxSize,
+                    initial_food_y: food.y / boxSize,
+                    grid_cols: cols,
+                    grid_rows: rows,
+                    box_size: boxSize
+                };
+
+                try {
+                    const response = await fetch('', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(initialState)
+                    });
+
+                    if (response.ok) {
+                        console.log('Initial game state saved');
+                    }
+                } catch (error) {
+                    console.error('Failed to save initial state:', error);
                 }
             }
 
@@ -1881,6 +2131,8 @@ function handleGetLeaderboard($pdo)
                     }
                     
                     isReplayMode = true;
+                    // Hide recording indicator during replay
+                    hideRecordingIndicator();
                     replayMoveIndex = 0;
                     replayPaused = false;
                     replaySpeed = 1;
@@ -1895,13 +2147,38 @@ function handleGetLeaderboard($pdo)
                     if (replayTime) replayTime.textContent = '00:00 / ' + msToMMSS(replayTotalDuration);
 
                     // Initialize replay snake with correct position and length
-                    if (replayData.moves && replayData.moves.length > 0) {
+                    replaySnake = new Snake();
+                    powerUps = [];
+                    obstacles = [];
+                    
+                    if (replayData.initial_state) {
+                        // Use stored initial state for accurate replay
+                        const initialState = replayData.initial_state;
+                        const startX = initialState.initial_snake_x * initialState.box_size;
+                        const startY = initialState.initial_snake_y * initialState.box_size;
+                        
+                        replaySnake.body = [p.createVector(startX, startY)];
+                        
+                        // Set initial direction
+                        switch(initialState.initial_snake_direction) {
+                            case 'right': replaySnake.xdir = 1; replaySnake.ydir = 0; break;
+                            case 'left': replaySnake.xdir = -1; replaySnake.ydir = 0; break;
+                            case 'up': replaySnake.xdir = 0; replaySnake.ydir = -1; break;
+                            case 'down': replaySnake.xdir = 0; replaySnake.ydir = 1; break;
+                        }
+                        
+                        // Set initial food position
+                        food = p.createVector(
+                            initialState.initial_food_x * initialState.box_size, 
+                            initialState.initial_food_y * initialState.box_size
+                        );
+                        food.scale = 1;
+                    } else if (replayData.moves && replayData.moves.length > 0) {
+                        // Fallback to first move data if no initial state
                         const firstMove = replayData.moves[0];
-                        replaySnake = new Snake();
-                        // Initialize snake at the correct starting position
                         replaySnake.body = [p.createVector(
-                            Math.floor(cols / 2) * boxSize, 
-                            Math.floor(rows / 2) * boxSize
+                            firstMove.snake_head_x * boxSize, 
+                            firstMove.snake_head_y * boxSize
                         )];
                         replaySnake.xdir = 1;
                         replaySnake.ydir = 0;
@@ -1975,10 +2252,102 @@ function handleGetLeaderboard($pdo)
                         food.x = currentMove.food_x * boxSize;
                         food.y = currentMove.food_y * boxSize;
                         
-                        // Handle snake growth - if current length is greater than previous, snake ate food
-                        // We need to grow the snake until it reaches the correct length
+                        // Handle snake growth/length changes
                         while (replaySnake.body.length < currentMove.snake_length) {
                             replaySnake.grow();
+                        }
+                        while (replaySnake.body.length > currentMove.snake_length) {
+                            replaySnake.body.pop();
+                        }
+                        
+                        // Update score and level displays during replay
+                        if (currentMove.score !== undefined) {
+                            score = currentMove.score;
+                            gsap.to(scoreEl, {
+                                duration: 0.3,
+                                innerHTML: score,
+                                snap: { innerHTML: 1 },
+                                ease: "power2.out"
+                            });
+                        }
+                        if (currentMove.level !== undefined) {
+                            level = currentMove.level;
+                            gsap.to(levelEl, {
+                                duration: 0.3,
+                                innerHTML: level,
+                                snap: { innerHTML: 1 },
+                                ease: "power2.out"
+                            });
+                        }
+                        
+                        // Restore power-ups state
+                        if (currentMove.power_ups_data) {
+                            try {
+                                const powerUpsData = JSON.parse(currentMove.power_ups_data);
+                                powerUps = powerUpsData.map(pu => ({
+                                    pos: p.createVector(pu.x * boxSize, pu.y * boxSize),
+                                    type: pu.type,
+                                    show: function() {
+                                        p.push();
+                                        p.translate(this.pos.x + boxSize/2, this.pos.y + boxSize/2);
+                                        
+                                        switch(this.type) {
+                                            case 'speed':
+                                                p.fill(59, 130, 246);
+                                                p.rotate(p.frameCount * 0.05);
+                                                p.triangle(0, -8, -7, 6, 7, 6);
+                                                break;
+                                            case 'shield':
+                                                p.fill(139, 92, 246);
+                                                p.ellipse(0, 0, boxSize * 0.8);
+                                                p.fill(255);
+                                                p.textSize(12);
+                                                p.textAlign(p.CENTER, p.CENTER);
+                                                p.text('🛡', 0, 0);
+                                                break;
+                                            case 'slow':
+                                                p.fill(236, 72, 153);
+                                                p.rectMode(p.CENTER);
+                                                p.rect(0, 0, boxSize * 0.7, boxSize * 0.7, 4);
+                                                p.fill(255);
+                                                p.textSize(12);
+                                                p.textAlign(p.CENTER, p.CENTER);
+                                                p.text('🐢', 0, 0);
+                                                break;
+                                            case 'duplicate':
+                                                p.fill(245, 158, 11);
+                                                p.rectMode(p.CENTER);
+                                                p.push();
+                                                p.translate(-4, 0);
+                                                p.rect(0, 0, boxSize * 0.4, boxSize * 0.4, 2);
+                                                p.pop();
+                                                p.push();
+                                                p.translate(4, 0);
+                                                p.rect(0, 0, boxSize * 0.4, boxSize * 0.4, 2);
+                                                p.pop();
+                                                break;
+                                        }
+                                        p.pop();
+                                    }
+                                }));
+                            } catch (e) {
+                                console.warn('Failed to parse power-ups data:', e);
+                            }
+                        }
+                        
+                        // Restore obstacles state
+                        if (currentMove.obstacles_data) {
+                            try {
+                                const obstaclesData = JSON.parse(currentMove.obstacles_data);
+                                obstacles = obstaclesData.map(obs => p.createVector(obs.x * boxSize, obs.y * boxSize));
+                            } catch (e) {
+                                console.warn('Failed to parse obstacles data:', e);
+                            }
+                        }
+                        
+                        // Handle special events
+                        if (currentMove.event_type) {
+                            handleReplayEvent(currentMove.event_type, currentMove.event_data);
                         }
                         
                         replayMoveIndex++;
@@ -2002,6 +2371,50 @@ function handleGetLeaderboard($pdo)
                 }
             }
 
+            function handleReplayEvent(eventType, eventDataStr) {
+                try {
+                    const eventData = eventDataStr ? JSON.parse(eventDataStr) : null;
+                    
+                    switch(eventType) {
+                        case 'food_eaten':
+                            // Play food eating sound
+                            if (eatSound) {
+                                eatSound.currentTime = 0;
+                                eatSound.play().catch(e => {});
+                            }
+                            // Show eating particle effect
+                            if (eventData && eventData.position) {
+                                showFoodEatenEffect(eventData.position.x * boxSize, eventData.position.y * boxSize);
+                            }
+                            break;
+                        case 'power_up_collected':
+                            // Show power-up collection effect
+                            if (eventData) {
+                                showPowerUpNotification(`${eventData.type.toUpperCase()} COLLECTED!`, '#10b981');
+                            }
+                            break;
+                        case 'level_up':
+                            // Show level up effect
+                            showPowerUpNotification(`LEVEL ${eventData.new_level}!`, '#3b82f6');
+                            break;
+                    }
+                } catch (e) {
+                    console.warn('Failed to handle replay event:', e);
+                }
+            }
+
+            function showRecordingIndicator() {
+                if (recordingIndicatorEl) {
+                    recordingIndicatorEl.classList.remove('hidden');
+                }
+            }
+
+            function hideRecordingIndicator() {
+                if (recordingIndicatorEl) {
+                    recordingIndicatorEl.classList.add('hidden');
+                }
+            }
+
             function msToMMSS(ms) {
                 const totalSec = Math.max(0, Math.floor(ms / 1000));
                 const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
@@ -2016,24 +2429,119 @@ function handleGetLeaderboard($pdo)
             }
 
         function rebuildReplaySnakeToIndex(targetIndex) {
+                if (!replayData || targetIndex < 0) return;
+                
                 replaySnake = new Snake();
-                replaySnake.body = [p.createVector(
-                    Math.floor(cols / 2) * boxSize,
-                    Math.floor(rows / 2) * boxSize
-                )];
-                replaySnake.xdir = 1;
-                replaySnake.ydir = 0;
-                for (let i = 0; i <= targetIndex; i++) {
+                powerUps = [];
+                obstacles = [];
+                
+                // Initialize from stored initial state if available
+                if (replayData.initial_state) {
+                    const initialState = replayData.initial_state;
+                    const startX = initialState.initial_snake_x * initialState.box_size;
+                    const startY = initialState.initial_snake_y * initialState.box_size;
+                    
+                    replaySnake.body = [p.createVector(startX, startY)];
+                    
+                    // Set initial direction
+                    switch(initialState.initial_snake_direction) {
+                        case 'right': replaySnake.xdir = 1; replaySnake.ydir = 0; break;
+                        case 'left': replaySnake.xdir = -1; replaySnake.ydir = 0; break;
+                        case 'up': replaySnake.xdir = 0; replaySnake.ydir = -1; break;
+                        case 'down': replaySnake.xdir = 0; replaySnake.ydir = 1; break;
+                    }
+                    
+                    // Set initial food position
+                    food = p.createVector(
+                        initialState.initial_food_x * initialState.box_size, 
+                        initialState.initial_food_y * initialState.box_size
+                    );
+                } else {
+                    // Fallback initialization
+                    replaySnake.body = [p.createVector(
+                        Math.floor(cols / 2) * boxSize,
+                        Math.floor(rows / 2) * boxSize
+                    )];
+                    replaySnake.xdir = 1;
+                    replaySnake.ydir = 0;
+                    food = p.createVector(0, 0);
+                }
+                
+                // Replay all moves up to targetIndex
+                for (let i = 0; i <= targetIndex && i < replayData.moves.length; i++) {
                     const mv = replayData.moves[i];
                     replaySnake.setDir(mv.direction);
                     replaySnake.update();
+                    
+                    // Adjust snake length
                     while (replaySnake.body.length < mv.snake_length) {
                         replaySnake.grow();
                     }
-            if (!food) food = p.createVector(0, 0);
-            food.x = mv.food_x * boxSize;
-            food.y = mv.food_y * boxSize;
+                    while (replaySnake.body.length > mv.snake_length) {
+                        replaySnake.body.pop();
+                    }
+                    
+                    // Update food position
+                    food.x = mv.food_x * boxSize;
+                    food.y = mv.food_y * boxSize;
+                    
+                    // Update score and level
+                    if (mv.score !== undefined) score = mv.score;
+                    if (mv.level !== undefined) level = mv.level;
+                    
+                    // Restore power-ups and obstacles state for this move
+                    if (mv.power_ups_data) {
+                        try {
+                            const powerUpsData = JSON.parse(mv.power_ups_data);
+                            powerUps = powerUpsData.map(pu => ({
+                                pos: p.createVector(pu.x * boxSize, pu.y * boxSize),
+                                type: pu.type,
+                                show: function() {
+                                    p.push();
+                                    p.translate(this.pos.x + boxSize/2, this.pos.y + boxSize/2);
+                                    
+                                    switch(this.type) {
+                                        case 'speed':
+                                            p.fill(59, 130, 246);
+                                            p.rotate(p.frameCount * 0.05);
+                                            p.triangle(0, -8, -7, 6, 7, 6);
+                                            break;
+                                        case 'shield':
+                                            p.fill(139, 92, 246);
+                                            p.ellipse(0, 0, boxSize * 0.8);
+                                            break;
+                                        case 'slow':
+                                            p.fill(236, 72, 153);
+                                            p.rectMode(p.CENTER);
+                                            p.rect(0, 0, boxSize * 0.7, boxSize * 0.7, 4);
+                                            break;
+                                        case 'duplicate':
+                                            p.fill(245, 158, 11);
+                                            p.rectMode(p.CENTER);
+                                            p.rect(0, 0, boxSize * 0.4, boxSize * 0.4, 2);
+                                            break;
+                                    }
+                                    p.pop();
+                                }
+                            }));
+                        } catch (e) {
+                            console.warn('Failed to parse power-ups data during rebuild:', e);
+                        }
+                    }
+                    
+                    if (mv.obstacles_data) {
+                        try {
+                            const obstaclesData = JSON.parse(mv.obstacles_data);
+                            obstacles = obstaclesData.map(obs => p.createVector(obs.x * boxSize, obs.y * boxSize));
+                        } catch (e) {
+                            console.warn('Failed to parse obstacles data during rebuild:', e);
+                        }
+                    }
                 }
+                
+                // Update UI displays
+                gsap.set(scoreEl, { innerHTML: score });
+                gsap.set(levelEl, { innerHTML: level });
             }
 
             function seekReplay(percent) {
@@ -2110,6 +2618,8 @@ function handleGetLeaderboard($pdo)
 
             function exitReplay() {
                 isReplayMode = false;
+                // Show recording indicator again when exiting replay
+                showRecordingIndicator();
                 replayData = null;
                 replaySnake = null;
                 replayMoveIndex = 0;
@@ -2200,6 +2710,8 @@ function handleGetLeaderboard($pdo)
                 gameMoves = [];
                 powerUps = [];
                 obstacles = [];
+                // Show recording indicator
+                showRecordingIndicator();
                 // Make sure we have a player name, generate one if needed
                 if (!playerName) {
                     playerName = generateRandomName();
@@ -2521,6 +3033,8 @@ function handleGetLeaderboard($pdo)
             function gameOver() {
                 if (isReplayMode || isGameOver) return;
                 isGameOver = true;
+                // Hide recording indicator when game ends
+                hideRecordingIndicator();
                 setLeaderboardVisibility(false);
                 // Display player name
                 playerNameDisplay.textContent = playerName;
