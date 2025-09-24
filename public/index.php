@@ -181,12 +181,20 @@ function handleSaveMove($pdo, $data)
         $stmt->bindParam(':snake_head_y', $data->snake_head_y);
         $stmt->bindParam(':food_x', $data->food_x);
         $stmt->bindParam(':food_y', $data->food_y);
-        $stmt->bindParam(':score', $data->score ?? 0);
-        $stmt->bindParam(':level', $data->level ?? 1);
-        $stmt->bindParam(':event_type', $data->event_type ?? null);
-        $stmt->bindParam(':event_data', $data->event_data ?? null);
-        $stmt->bindParam(':power_ups_data', $data->power_ups_data ?? null);
-        $stmt->bindParam(':obstacles_data', $data->obstacles_data ?? null);
+        
+        $score = $data->score ?? 0;
+        $level = $data->level ?? 1;
+        $event_type = $data->event_type ?? null;
+        $event_data = $data->event_data ?? null;
+        $power_ups_data = $data->power_ups_data ?? null;
+        $obstacles_data = $data->obstacles_data ?? null;
+        
+        $stmt->bindParam(':score', $score);
+        $stmt->bindParam(':level', $level);
+        $stmt->bindParam(':event_type', $event_type);
+        $stmt->bindParam(':event_data', $event_data);
+        $stmt->bindParam(':power_ups_data', $power_ups_data);
+        $stmt->bindParam(':obstacles_data', $obstacles_data);
         $stmt->execute();
 
         echo json_encode(['message' => 'Move saved successfully']);
@@ -258,7 +266,6 @@ function handleSaveInitialState($pdo, $data)
         http_response_code(500);
         echo json_encode(['message' => 'Failed to save initial state: ' . $e->getMessage()]);
     }
-}
 }
 
 function handleGetReplay($pdo, $gameId)
