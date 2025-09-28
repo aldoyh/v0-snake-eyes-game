@@ -508,10 +508,10 @@ function handleGetLeaderboard($pdo)
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* Game controls buttons */
+        /* Game controls buttons - Enhanced for mobile */
         .control-btn {
-            background: rgba(255, 255, 255, 0.05); /* More transparent */
-            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(16, 185, 129, 0.3);
             border-radius: 12px;
             padding: 0.75rem 1.5rem;
             font-weight: 600;
@@ -519,16 +519,45 @@ function handleGetLeaderboard($pdo)
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            touch-action: manipulation;
+            min-height: 44px; /* Minimum touch target size */
+            min-width: 100px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
         }
 
         .control-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-            background: rgba(255, 255, 255, 0.1); /* More transparent on hover */
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--primary-green);
         }
 
         .control-btn:active {
-            transform: translateY(0);
+            transform: translateY(0) scale(0.98);
+            background: rgba(16, 185, 129, 0.3);
+            border-color: var(--secondary-green);
+        }
+
+        /* Mobile-specific touch feedback */
+        @media (hover: none) and (pointer: coarse) {
+            .control-btn:hover {
+                transform: none;
+                background: rgba(255, 255, 255, 0.1);
+                border-color: rgba(16, 185, 129, 0.3);
+            }
+            
+            .control-btn:active {
+                transform: scale(0.95);
+                background: rgba(16, 185, 129, 0.3);
+                border-color: var(--primary-green);
+            }
         }
 
         .control-btn.primary {
@@ -578,118 +607,387 @@ function handleGetLeaderboard($pdo)
             line-height: 1.6;
         }
 
-        /* Mobile responsive adjustments */
+        /* Mobile responsive adjustments - Tablet and larger phones */
         @media (max-width: 768px) {
+            body {
+                padding: 0;
+                margin: 0;
+                min-height: 100vh;
+                overflow-x: hidden;
+            }
+
             #canvas-container {
-                width: 95vw;
-                height: 60vh;
-                max-height: 60vh;
-                padding: 15px;
-                border-radius: 20px;
+                width: 100vw;
+                height: 65vh;
+                max-height: 65vh;
+                padding: 8px;
+                border-radius: 0;
+                margin: 0;
+                background: rgba(255, 255, 255, 0.08);
+                backdrop-filter: blur(8px);
             }
             
             canvas {
-                border-radius: 15px;
+                border-radius: 8px;
+                width: 100% !important;
+                height: 100% !important;
+                max-width: none;
+                max-height: none;
             }
             
             .main-game-ui {
-                margin-bottom: 1rem;
-                padding: 1rem;
+                margin-bottom: 0.5rem;
+                padding: 0.75rem;
+                border-radius: 0;
+                background: rgba(255, 255, 255, 0.08);
+                backdrop-filter: blur(8px);
             }
             
             .main-game-ui h1 {
-                font-size: 2rem;
-                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+                font-size: 2.5rem;
+                text-shadow: 0 3px 12px rgba(0, 0, 0, 0.8);
+                margin-bottom: 0.5rem;
             }
             
             .main-game-ui .score-level {
-                font-size: 1.25rem;
-                gap: 1rem;
+                font-size: 1.4rem;
+                gap: 1.5rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .main-game-ui .score-level > div {
+                padding: 0.75rem 1.25rem;
+                border-radius: 16px;
+                background: rgba(255, 255, 255, 0.12);
+                backdrop-filter: blur(12px);
+                border: 2px solid rgba(16, 185, 129, 0.3);
+                min-width: 120px;
+                text-align: center;
+            }
+
+            #recording-indicator {
+                font-size: 1rem;
+                padding: 0.5rem 1rem;
+                background: rgba(239, 68, 68, 0.2);
+                border: 2px solid rgba(239, 68, 68, 0.5);
+                border-radius: 12px;
+                backdrop-filter: blur(8px);
+            }
+
+            /* Power-ups section enhancement */
+            .main-game-ui > div:last-child {
+                margin-top: 1rem;
+                padding: 1rem;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 12px;
+                backdrop-filter: blur(6px);
+            }
+
+            .main-game-ui > div:last-child > div {
+                width: 50px !important;
+                height: 50px !important;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(8px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.8rem;
+                margin: 0.25rem;
             }
 
             /* Responsive overlay adjustments */
             .overlay {
-                padding: 1.5rem;
-                border-radius: 15px;
+                padding: 2rem 1.5rem;
+                border-radius: 20px;
+                margin: 1rem;
+                max-width: calc(100vw - 2rem);
+                max-height: calc(100vh - 2rem);
+                overflow-y: auto;
             }
 
             .overlay h2 {
-                font-size: 1.75rem;
-                margin-bottom: 1rem;
+                font-size: 2.25rem;
+                margin-bottom: 1.5rem;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
             }
 
             .overlay p {
-                font-size: 1rem;
+                font-size: 1.1rem;
                 margin-bottom: 1.5rem;
-                max-width: 90%;
+                max-width: 100%;
+                line-height: 1.6;
             }
 
             #name-entry-overlay input {
-                width: 90%;
-                font-size: 1rem;
-                padding: 0.75rem;
+                width: 100%;
+                font-size: 1.2rem;
+                padding: 1rem;
+                border-radius: 12px;
+                border: 2px solid rgba(16, 185, 129, 0.3);
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(8px);
+                color: white;
+                margin-bottom: 1rem;
+            }
+
+            #name-entry-overlay input:focus {
+                border-color: var(--primary-green);
+                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+                outline: none;
             }
 
             .control-btn {
-                font-size: 0.9rem;
-                padding: 0.75rem 1.25rem;
+                font-size: 1rem;
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                margin: 0.5rem;
+                min-width: 120px;
+                touch-action: manipulation;
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(12px);
+                border: 2px solid rgba(16, 185, 129, 0.3);
+                transition: all 0.2s ease;
+            }
+
+            .control-btn:hover, .control-btn:active {
+                background: rgba(16, 185, 129, 0.2);
+                border-color: var(--primary-green);
+                transform: scale(1.05);
+            }
+
+            /* Tutorial section improvements */
+            #tutorial-overlay .grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            #tutorial-overlay .grid > div {
+                padding: 1.5rem;
+                border-radius: 16px;
+                background: rgba(255, 255, 255, 0.08);
+                backdrop-filter: blur(8px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            #tutorial-overlay .grid > div > div:first-child {
+                font-size: 2.5rem;
+                margin-bottom: 1rem;
+            }
+
+            #tutorial-overlay .grid > div p {
+                font-size: 1.1rem;
+                line-height: 1.5;
             }
         }
 
+        /* Mobile responsive adjustments - Small phones */
         @media (max-width: 480px) {
+            body {
+                padding: 0;
+                margin: 0;
+                font-size: 14px;
+            }
+
             #canvas-container {
-                width: 98vw;
-                height: 55vh;
-                max-height: 55vh;
-                padding: 12px;
-                border-radius: 15px;
+                width: 100vw;
+                height: 60vh;
+                max-height: 60vh;
+                padding: 4px;
+                border-radius: 0;
+                margin: 0;
+                background: rgba(255, 255, 255, 0.08);
             }
             
             canvas {
-                border-radius: 12px;
+                border-radius: 4px;
+                width: 100% !important;
+                height: 100% !important;
             }
             
+            .main-game-ui {
+                padding: 0.5rem;
+                margin-bottom: 0.25rem;
+                border-radius: 0;
+            }
+
             .main-game-ui h1 {
-                font-size: 1.5rem;
-                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+                font-size: 2rem;
+                text-shadow: 0 3px 12px rgba(0, 0, 0, 0.8);
+                margin-bottom: 0.5rem;
             }
             
             .main-game-ui .score-level {
-                font-size: 1rem;
-                gap: 0.5rem;
+                font-size: 1.2rem;
+                gap: 1rem;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .main-game-ui .score-level > div {
+                padding: 0.75rem 1.5rem;
+                border-radius: 20px;
+                background: rgba(255, 255, 255, 0.15);
+                backdrop-filter: blur(12px);
+                border: 2px solid rgba(16, 185, 129, 0.4);
+                min-width: 140px;
+                text-align: center;
+                font-weight: 600;
+            }
+
+            #recording-indicator {
+                font-size: 0.9rem;
+                padding: 0.5rem 1rem;
+                margin-top: 0.5rem;
+            }
+
+            /* Power-ups section - make them larger and more touch-friendly */
+            .main-game-ui > div:last-child {
+                margin-top: 1rem;
+                padding: 1rem;
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 16px;
+                backdrop-filter: blur(8px);
+            }
+
+            .main-game-ui > div:last-child > div {
+                width: 60px !important;
+                height: 60px !important;
+                border-radius: 16px;
+                background: rgba(255, 255, 255, 0.15);
+                backdrop-filter: blur(10px);
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2rem;
+                margin: 0.5rem;
+                transition: all 0.2s ease;
+            }
+
+            .main-game-ui > div:last-child > div:hover {
+                transform: scale(1.1);
+                background: rgba(255, 255, 255, 0.2);
             }
 
             /* Extra small screen overlay adjustments */
             .overlay {
-                padding: 1rem;
-                border-radius: 12px;
+                padding: 1.5rem 1rem;
+                border-radius: 16px;
+                margin: 0.5rem;
+                max-width: calc(100vw - 1rem);
+                max-height: calc(100vh - 1rem);
+                overflow-y: auto;
             }
 
             .overlay h2 {
-                font-size: 1.5rem;
-                margin-bottom: 0.75rem;
+                font-size: 1.8rem;
+                margin-bottom: 1rem;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
             }
 
             .overlay p {
-                font-size: 0.9rem;
+                font-size: 1rem;
                 margin-bottom: 1rem;
-                max-width: 95%;
+                max-width: 100%;
+                line-height: 1.5;
             }
 
             #name-entry-overlay input {
-                width: 95%;
-                font-size: 0.9rem;
-                padding: 0.6rem;
+                width: 100%;
+                font-size: 1.1rem;
+                padding: 1rem;
+                border-radius: 12px;
+                margin-bottom: 1rem;
             }
 
             .control-btn {
-                font-size: 0.8rem;
-                padding: 0.6rem 1rem;
+                font-size: 0.95rem;
+                padding: 1rem 1.25rem;
+                border-radius: 12px;
+                margin: 0.25rem;
+                min-width: 110px;
+                min-height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             #name-entry-overlay .flex {
                 flex-direction: column;
-                gap: 0.75rem;
+                gap: 1rem;
+                align-items: center;
+            }
+
+            /* Tutorial improvements for small screens */
+            #tutorial-overlay .grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            #tutorial-overlay .grid > div {
+                padding: 1.25rem;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+            }
+
+            #tutorial-overlay .grid > div > div:first-child {
+                font-size: 2.2rem;
+                margin-bottom: 0.75rem;
+            }
+
+            #tutorial-overlay .grid > div p {
+                font-size: 1rem;
+                line-height: 1.4;
+                margin: 0;
+            }
+
+            /* Game Over and Replay overlays */
+            #game-over .flex, #replay-overlay .flex {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: center;
+            }
+
+            /* Replay controls */
+            #replay-overlay .flex:first-of-type {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+
+            #replay-seek {
+                width: 100%;
+                margin: 1rem 0;
+                height: 8px;
+                border-radius: 4px;
+                background: rgba(255, 255, 255, 0.2);
+                -webkit-appearance: none;
+                appearance: none;
+            }
+
+            #replay-seek::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: var(--primary-green);
+                cursor: pointer;
+            }
+
+            #replay-seek::-moz-range-thumb {
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: var(--primary-green);
+                cursor: pointer;
+                border: none;
             }
         }
 
@@ -772,60 +1070,91 @@ function handleGetLeaderboard($pdo)
             background: rgba(15, 23, 42, 0.8);
         }
 
-        /* Retractable leaderboard on mobile */
+        /* Retractable leaderboard on mobile - Enhanced */
         @media (max-width: 768px) {
             #leaderboard-container {
                 position: fixed;
                 top: 10px;
-                left: -260px;
-                width: 280px;
-                max-width: 80vw;
+                left: -280px;
+                width: 300px;
+                max-width: 85vw;
+                height: calc(100vh - 20px);
+                max-height: calc(100vh - 20px);
                 background: rgba(15, 23, 42, 0.95);
-                border-radius: 0 0.75rem 0.75rem 0;
-                padding: 0.75rem;
-                z-index: 35;
-                transform: translateX(0);
-                backdrop-filter: blur(16px);
-                -webkit-backdrop-filter: blur(16px);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 2px solid rgba(16, 185, 129, 0.3);
+                border-radius: 20px;
+                padding: 1.5rem;
+                transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 1000;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+                overflow-y: auto;
+                transform: none;
             }
             
             #leaderboard-container.expanded {
-                transform: translateX(260px);
+                left: 10px;
+                transform: none;
             }
             
             #leaderboard-toggle {
                 position: fixed;
-                top: 10px;
-                left: 10px;
-                z-index: 40;
-                background: rgba(15, 23, 42, 0.7);
-                border: 1px solid rgba(255, 255, 255, 0.2);
+                top: 20px;
+                left: 20px;
+                z-index: 1001;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                background: rgba(16, 185, 129, 0.9);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 2px solid rgba(16, 185, 129, 0.5);
                 color: white;
-                padding: 0.75rem;
-                border-radius: 12px;
-                font-size: 1.2rem;
+                font-size: 1.5rem;
                 cursor: pointer;
                 transition: all 0.3s ease;
-                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
+                box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
             }
-            
+
             #leaderboard-toggle:hover {
-                background: rgba(15, 23, 42, 0.8);
                 transform: scale(1.1);
-                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+                background: rgba(16, 185, 129, 1);
+                box-shadow: 0 12px 32px rgba(16, 185, 129, 0.6);
             }
             
             #leaderboard-title {
-                font-size: 1rem;
-                margin-bottom: 0.5rem;
+                color: var(--primary-green);
+                font-size: 1.5rem;
+                margin-bottom: 1.5rem;
+                text-align: center;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
             }
             
             #leaderboard-list {
-                font-size: 0.85rem;
-                max-height: 200px;
+                font-size: 0.95rem;
+                max-height: calc(100vh - 150px);
                 overflow-y: auto;
+                padding-right: 0.5rem;
+            }
+
+            #leaderboard-list li {
+                padding: 0.75rem;
+                margin-bottom: 0.5rem;
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(8px);
+                transition: all 0.2s ease;
+            }
+
+            #leaderboard-list li:hover {
+                background: rgba(255, 255, 255, 0.15);
+                transform: translateX(5px);
             }
         }
 
@@ -1031,6 +1360,223 @@ function handleGetLeaderboard($pdo)
 
         #leaderboard-list::-webkit-scrollbar-thumb:hover {
             background: var(--secondary-green);
+        }
+
+        /* Landscape orientation optimizations for mobile devices */
+        @media (max-width: 768px) and (orientation: landscape) {
+            body {
+                overflow: hidden;
+                padding: 0;
+                flex-direction: row;
+                align-items: stretch;
+                justify-content: flex-start;
+            }
+
+            #canvas-container {
+                width: 70vw;
+                height: 95vh;
+                max-height: 95vh;
+                margin: 0;
+                padding: 5px;
+                position: absolute;
+                right: 5px;
+                top: 2.5vh;
+                border-radius: 8px;
+            }
+
+            .main-game-ui {
+                position: absolute;
+                left: 5px;
+                top: 2.5vh;
+                width: 25vw;
+                height: 95vh;
+                margin: 0;
+                padding: 1rem 0.5rem;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                border-radius: 8px;
+            }
+
+            .main-game-ui h1 {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+                text-align: center;
+            }
+
+            .main-game-ui .score-level {
+                font-size: 1rem;
+                flex-direction: column;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+
+            .main-game-ui .score-level > div {
+                padding: 0.5rem;
+                min-width: auto;
+                width: 100%;
+                font-size: 0.9rem;
+                text-align: center;
+            }
+
+            #recording-indicator {
+                font-size: 0.8rem;
+                padding: 0.25rem 0.5rem;
+                margin: 0.25rem 0;
+                text-align: center;
+            }
+
+            .main-game-ui > div:last-child {
+                margin-top: 0.5rem;
+                padding: 0.5rem;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.25rem;
+            }
+
+            .main-game-ui > div:last-child > div {
+                width: 40px !important;
+                height: 40px !important;
+                font-size: 1.4rem;
+                margin: 0;
+            }
+
+            /* Adjust overlays for landscape */
+            .overlay {
+                width: 80vw;
+                max-width: 600px;
+                max-height: 85vh;
+                padding: 1.5rem;
+                overflow-y: auto;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                position: fixed;
+            }
+
+            .overlay h2 {
+                font-size: 1.8rem;
+                margin-bottom: 1rem;
+            }
+
+            .overlay p {
+                font-size: 0.95rem;
+                margin-bottom: 1rem;
+            }
+
+            .control-btn {
+                font-size: 0.9rem;
+                padding: 0.75rem 1rem;
+                margin: 0.25rem;
+            }
+
+            /* Leaderboard adjustments for landscape */
+            #leaderboard-container {
+                width: 250px;
+                left: -250px;
+                height: calc(100vh - 10px);
+                top: 5px;
+                z-index: 1001;
+            }
+
+            #leaderboard-container.expanded {
+                left: 5px;
+            }
+
+            #leaderboard-toggle {
+                top: 10px;
+                left: 10px;
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+                z-index: 1002;
+            }
+
+            /* Tutorial grid for landscape */
+            #tutorial-overlay .grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+
+            #tutorial-overlay .grid > div {
+                padding: 1rem;
+            }
+
+            #tutorial-overlay .grid > div > div:first-child {
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+            }
+
+            #tutorial-overlay .grid > div p {
+                font-size: 0.9rem;
+            }
+
+            /* Name entry landscape optimization */
+            #name-entry-overlay {
+                width: 70vw;
+                max-width: 500px;
+            }
+
+            #name-entry-overlay input {
+                width: 100%;
+                font-size: 1rem;
+                padding: 0.75rem;
+            }
+
+            /* Game over and replay landscape adjustments */
+            #game-over, #replay-overlay {
+                width: 70vw;
+                max-width: 500px;
+            }
+
+            #replay-overlay .flex:first-of-type {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+        }
+
+        /* Extra optimizations for very small landscape screens */
+        @media (max-width: 480px) and (orientation: landscape) {
+            .main-game-ui {
+                width: 30vw;
+                padding: 0.5rem 0.25rem;
+            }
+
+            #canvas-container {
+                width: 65vw;
+                right: 2.5vw;
+            }
+
+            .main-game-ui h1 {
+                font-size: 1.2rem;
+            }
+
+            .main-game-ui .score-level {
+                font-size: 0.9rem;
+            }
+
+            .main-game-ui > div:last-child > div {
+                width: 35px !important;
+                height: 35px !important;
+                font-size: 1.2rem;
+            }
+
+            .overlay {
+                width: 85vw;
+                padding: 1rem;
+            }
+
+            .overlay h2 {
+                font-size: 1.5rem;
+            }
+
+            .control-btn {
+                font-size: 0.8rem;
+                padding: 0.6rem 0.8rem;
+            }
         }
     </style>
 </head>
