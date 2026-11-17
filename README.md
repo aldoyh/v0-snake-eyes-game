@@ -5,11 +5,13 @@ An upgraded version of the classic Snake game with modern features and enhanced 
 ## FEATURES
 
 ### Core Gameplay
+
 - Classic snake movement with swipe/touch controls
 - Score tracking and level progression
 - Collision detection (walls, self, obstacles)
 
 ### Enhanced Features
+
 - **Power-up System**: Collect special items for temporary abilities
   - ⚡ Speed Boost: Increase snake movement speed
   - 🛡️ Shield: Temporary invincibility against collisions
@@ -21,15 +23,18 @@ An upgraded version of the classic Snake game with modern features and enhanced 
 - **Responsive Design**: Works on mobile, tablet, and desktop devices
 
 ### Social Features
+
 - Leaderboard with top 10 players
 - Game replay system to watch your best performances
 - Score sharing capabilities
 
 ### Localization
+
 - Full English and Arabic language support
 - RTL (Right-to-Left) layout support for Arabic
 
 ### Audio
+
 - Immersive sound effects for game events
 - Background music support
 
@@ -52,16 +57,18 @@ BAHRAINOUNA
 ## HOW TO RUN
 
 1. Make the run script executable:
+
    ```bash
    chmod +x Run.sh
    ```
 
 2. Run the game:
+
    ```bash
    ./Run.sh
    ```
 
-3. Open your browser and navigate to the provided localhost address (usually http://localhost:8000)
+3. Open your browser and navigate to the provided localhost address (usually <http://localhost:8000>)
 
 ## IMPROVEMENTS FROM ORIGINAL VERSION
 
@@ -124,6 +131,7 @@ The game uses SQLite with three main tables:
 ## CUSTOMIZATION
 
 You can customize the game by modifying:
+
 - Colors: Edit the CSS variables in the style section
 - Difficulty: Adjust the level progression parameters
 - Power-ups: Modify duration and effects in the JavaScript code
