@@ -41,8 +41,32 @@ function recreate_schema(PDO $pdo): void {
         direction TEXT NOT NULL,
         timestamp_ms INTEGER NOT NULL,
         snake_length INTEGER NOT NULL,
+        snake_head_x INTEGER NOT NULL,
+        snake_head_y INTEGER NOT NULL,
         food_x INTEGER NOT NULL,
         food_y INTEGER NOT NULL,
+        score INTEGER NOT NULL DEFAULT 0,
+        level INTEGER NOT NULL DEFAULT 1,
+        event_type TEXT DEFAULT NULL,
+        event_data TEXT DEFAULT NULL,
+        power_ups_data TEXT DEFAULT NULL,
+        obstacles_data TEXT DEFAULT NULL,
+        FOREIGN KEY (game_id) REFERENCES games (id)
+    )");
+
+    // Table for storing initial game state for proper replay initialization
+    $pdo->exec("CREATE TABLE IF NOT EXISTS game_initial_state (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        game_id INTEGER NOT NULL UNIQUE,
+        initial_snake_x INTEGER NOT NULL,
+        initial_snake_y INTEGER NOT NULL,
+        initial_snake_direction TEXT NOT NULL,
+        initial_food_x INTEGER NOT NULL,
+        initial_food_y INTEGER NOT NULL,
+        grid_cols INTEGER NOT NULL,
+        grid_rows INTEGER NOT NULL,
+        box_size INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (game_id) REFERENCES games (id)
     )");
 
